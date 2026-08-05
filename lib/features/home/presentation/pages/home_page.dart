@@ -21,9 +21,8 @@ class HomePage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SizedBox(
-        height: MediaQuery.of(context).size.height,
-        child: const HomeBody(),
+      body: const SafeArea(
+        child: HomeBody(),
       ),
     );
   }
