@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/dimensions.dart';
 import 'package:siraty/core/constants/text_styles.dart';
@@ -12,7 +13,7 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final bool isLoading;
   final double? width;
-  final double height;
+  final double? height;
 
   const AppButton({
     super.key,
@@ -22,21 +23,22 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.isLoading = false,
     this.width,
-    this.height = AppDimensions.buttonHeight,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isDisabled = onPressed == null || isLoading;
+    final buttonHeight = height ?? AppDimensions.buttonHeight;
 
     switch (type) {
       case AppButtonType.outlined:
         return SizedBox(
           width: width ?? double.infinity,
-          height: height,
+          height: buttonHeight,
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.primaryGreen, width: 1.5),
+              side: BorderSide(color: AppColors.primaryGreen, width: 1.5.w),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
               ),
@@ -48,7 +50,7 @@ class AppButton extends StatelessWidget {
       case AppButtonType.secondary:
         return SizedBox(
           width: width ?? double.infinity,
-          height: height,
+          height: buttonHeight,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.buttonCream,
@@ -65,7 +67,7 @@ class AppButton extends StatelessWidget {
       case AppButtonType.primary:
         return SizedBox(
           width: width ?? double.infinity,
-          height: height,
+          height: buttonHeight,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
@@ -85,10 +87,10 @@ class AppButton extends StatelessWidget {
   Widget _buildChild(Color textColor) {
     if (isLoading) {
       return SizedBox(
-        width: 24,
-        height: 24,
+        width: 24.w,
+        height: 24.w,
         child: CircularProgressIndicator(
-          strokeWidth: 2.5,
+          strokeWidth: 2.5.w,
           color: textColor,
         ),
       );
@@ -98,8 +100,8 @@ class AppButton extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 22, color: textColor),
-          const SizedBox(width: 8),
+          Icon(icon, size: 22.sp, color: textColor),
+          SizedBox(width: 8.w),
           Text(
             label,
             style: AppTextStyles.titleMedium.copyWith(color: textColor),

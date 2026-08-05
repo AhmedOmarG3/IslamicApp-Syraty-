@@ -1,34 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
 
 class AppLoadingState extends StatelessWidget {
-  final String message;
+  final double? size;
+  final Color? color;
 
   const AppLoadingState({
     super.key,
-    this.message = 'جاري التحميل...',
+    this.size,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final indicatorSize = size ?? 40.w;
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(
-            color: AppColors.primaryGreen,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            message,
-            style: const TextStyle(
-              fontSize: 18,
-              color: AppColors.textSecondary,
-              fontFamily: 'Amiri',
-            ),
-          ),
-        ],
+      child: SizedBox(
+        width: indicatorSize,
+        height: indicatorSize,
+        child: CircularProgressIndicator(
+          strokeWidth: 3.w,
+          color: color ?? AppColors.primaryGreen,
+        ),
       ),
     );
   }

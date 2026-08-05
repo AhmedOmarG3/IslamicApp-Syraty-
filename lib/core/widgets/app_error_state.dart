@@ -1,66 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
+import 'package:siraty/core/constants/spacing.dart';
 import 'package:siraty/core/constants/text_styles.dart';
+import 'package:siraty/core/widgets/app_button.dart';
 
 class AppErrorState extends StatelessWidget {
   final String errorMessage;
-  final VoidCallback? onRetry;
+  final VoidCallback onRetry;
 
   const AppErrorState({
     super.key,
     required this.errorMessage,
-    this.onRetry,
+    required this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline,
-              size: 70,
+              size: 64.sp,
               color: AppColors.errorRed,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'حدث خطأ غير متوقع',
-              style: AppTextStyles.titleMedium,
-              textAlign: TextAlign.center,
+            AppSpacing.verticalLg,
+            Text(
+              'حدث خطأ',
+              style: AppTextStyles.titleMedium.copyWith(color: AppColors.errorRed),
             ),
-            const SizedBox(height: 8),
+            AppSpacing.verticalSm,
             Text(
               errorMessage,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text(
-                  'إعادة المحاولة',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Amiri',
-                  ),
-                ),
-              ),
-            ],
+            AppSpacing.verticalLg,
+            AppButton(
+              label: 'إعادة المحاولة',
+              onPressed: onRetry,
+              icon: Icons.refresh,
+              type: AppButtonType.outlined,
+              width: 200.w,
+            ),
           ],
         ),
       ),

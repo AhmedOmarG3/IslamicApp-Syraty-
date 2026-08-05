@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/app_constants.dart';
-import 'package:siraty/core/constants/colors.dart';
+import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/features/home/presentation/widgets/home_body.dart';
 
 class HomePage extends StatelessWidget {
@@ -11,12 +12,10 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           AppConstants.appName,
-          style: TextStyle(
-            fontSize: 30,
-            fontWeight: FontWeight.bold,
-            color: AppColors.primaryGreen,
+          style: AppTextStyles.appBarTitle.copyWith(
+            fontSize: 30.sp,
           ),
         ),
         centerTitle: true,

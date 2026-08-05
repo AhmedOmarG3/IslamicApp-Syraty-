@@ -16,7 +16,7 @@ abstract class AppTheme {
         error: AppColors.errorRed,
       ),
       scaffoldBackgroundColor: AppColors.surfaceLight,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.surfaceLight,
         elevation: AppDimensions.elevationFlat,
         centerTitle: true,
@@ -57,7 +57,7 @@ abstract class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primaryGreen,
           foregroundColor: AppColors.white,
-          minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
+          minimumSize: Size(double.infinity, AppDimensions.buttonHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),

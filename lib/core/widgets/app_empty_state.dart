@@ -1,52 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
+import 'package:siraty/core/constants/spacing.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 
 class AppEmptyState extends StatelessWidget {
   final String title;
   final String? subtitle;
-  final IconData icon;
-  final Widget? actionButton;
+  final IconData? icon;
 
   const AppEmptyState({
     super.key,
     required this.title,
     this.subtitle,
-    this.icon = Icons.inbox_outlined,
-    this.actionButton,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 80,
-              color: AppColors.primaryGreen.withValues(alpha: 0.5),
-            ),
-            const SizedBox(height: 16),
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 64.sp,
+                color: AppColors.grey,
+              ),
+              AppSpacing.verticalLg,
+            ],
             Text(
               title,
+              style: AppTextStyles.titleMedium.copyWith(color: AppColors.grey),
               textAlign: TextAlign.center,
-              style: AppTextStyles.titleMedium,
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 8),
+              AppSpacing.verticalSm,
               Text(
                 subtitle!,
-                textAlign: TextAlign.center,
                 style: AppTextStyles.bodyMedium,
+                textAlign: TextAlign.center,
               ),
-            ],
-            if (actionButton != null) ...[
-              const SizedBox(height: 24),
-              actionButton!,
             ],
           ],
         ),
