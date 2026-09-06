@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/dimensions.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 
@@ -35,35 +34,32 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
               autofocus: true,
               style: AppTextStyles.bodyLarge,
               textDirection: TextDirection.rtl,
-              decoration: InputDecoration(
+              textAlign: TextAlign.start,
+              decoration: InputDecoration.collapsed(
                 hintText: hintText,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
+                hintStyle: AppTextStyles.bodyMedium,
               ),
             )
           : Text(
               title,
-              style: AppTextStyles.appBarTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-      centerTitle: true,
-      actions: actions ??
-          (onSearchPressed != null
-              ? [
-                  isSearching
-                      ? IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.primaryGreen),
-                          onPressed: onClosePressed,
-                        )
-                      : IconButton(
-                          icon: const Icon(Icons.search, color: AppColors.primaryGreen),
-                          onPressed: onSearchPressed,
-                        ),
-                ]
-              : null),
+      actions: actions ?? _searchActions(),
     );
   }
 
+  List<Widget>? _searchActions() {
+    if (onSearchPressed == null) return null;
+    return [
+      IconButton(
+        tooltip: isSearching ? 'إغلاق البحث' : 'بحث',
+        onPressed: isSearching ? onClosePressed : onSearchPressed,
+        icon: Icon(isSearching ? Icons.close_rounded : Icons.search_rounded),
+      ),
+    ];
+  }
+
   @override
-  Size get preferredSize => Size.fromHeight(AppDimensions.appBarHeight);
+  Size get preferredSize => const Size.fromHeight(AppDimensions.appBarHeight);
 }

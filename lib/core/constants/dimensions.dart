@@ -1,20 +1,20 @@
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 abstract class AppDimensions {
-  // Border Radius Tokens
-  static double get radiusSm => 8.r;
-  static double get radiusMd => 16.r;
-  static double get radiusLg => 24.r;
-  static double get radiusPill => 100.r;
+  static const double radiusSm = 8;
+  static const double radiusMd = 12;
+  static const double radiusLg = 16;
+  static const double radiusPill = 100;
 
   // Elevation Tokens
-  static double get elevationFlat => 0.0;
-  static double get elevationLow => 2.0;
-  static double get elevationMedium => 6.0;
-  static double get elevationHigh => 12.0;
+  static const double elevationFlat = 0;
+  static const double elevationLow = 1;
+  static const double elevationMedium = 3;
+  static const double elevationHigh = 6;
 
   // App Layout Dimensions
-  static double get appBarHeight => 56.h;
-  static double get buttonHeight => 50.h;
-  static double get cardPadding => 16.w;
+  static const double appBarHeight = 64;
+  static const double buttonHeight = 52;
+  static const double cardPadding = 16;
+  static const double pagePadding = 20;
+  static const double compactPagePadding = 16;
+  static const double minimumTouchTarget = 48;
 }

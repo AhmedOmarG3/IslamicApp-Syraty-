@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
 
 class AppLoadingState extends StatelessWidget {
@@ -14,13 +13,13 @@ class AppLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final indicatorSize = size ?? 40.w;
+    final indicatorSize = size ?? 40;
     return Center(
       child: SizedBox(
         width: indicatorSize,
         height: indicatorSize,
         child: CircularProgressIndicator(
-          strokeWidth: 3.w,
+          strokeWidth: 3,
           color: color ?? AppColors.primaryGreen,
         ),
       ),

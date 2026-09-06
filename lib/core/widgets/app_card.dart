@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/dimensions.dart';
 
@@ -27,10 +26,11 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardPadding = padding ?? EdgeInsets.all(AppDimensions.cardPadding);
-    final cardMargin = margin ?? EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h);
+    final cardPadding = padding ?? const EdgeInsets.all(AppDimensions.cardPadding);
+    final cardMargin = margin ??
+        const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 8);
     final cardRadius = borderRadius ?? AppDimensions.radiusLg;
-    final cardElevation = elevation ?? AppDimensions.elevationLow;
+    final cardElevation = elevation ?? AppDimensions.elevationFlat;
 
     return Container(
       margin: cardMargin,
@@ -46,10 +46,13 @@ class AppCard extends StatelessWidget {
         color: gradientColors == null
             ? (backgroundColor ?? AppColors.cardSurface)
             : null,
+        border: gradientColors == null
+            ? Border.all(color: AppColors.outline)
+            : null,
         boxShadow: cardElevation > 0
             ? [
                 BoxShadow(
-                  color: AppColors.black.withValues(alpha: 0.08),
+                  color: AppColors.black.withValues(alpha: 0.05),
                   blurRadius: cardElevation * 2,
                   offset: Offset(0, cardElevation),
                 )
@@ -59,14 +62,13 @@ class AppCard extends StatelessWidget {
       child: Material(
         color: AppColors.transparent,
         borderRadius: BorderRadius.circular(cardRadius),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(cardRadius),
-          child: Padding(
-            padding: cardPadding,
-            child: child,
-          ),
-        ),
+        child: onTap == null
+            ? Padding(padding: cardPadding, child: child)
+            : InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(cardRadius),
+                child: Padding(padding: cardPadding, child: child),
+              ),
       ),
     );
   }

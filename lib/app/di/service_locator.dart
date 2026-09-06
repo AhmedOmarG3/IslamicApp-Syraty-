@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:siraty/core/theme/theme_cubit.dart';
 import 'package:siraty/features/azkar/data/datasource/azkar_local_data_source.dart';
 import 'package:siraty/features/azkar/data/repositories/azkar_repository_impl.dart';
 import 'package:siraty/features/azkar/domain/repositories/azkar_repository.dart';
@@ -14,6 +15,7 @@ import 'package:siraty/features/prayer/presentation/cubit/azan_cubit.dart';
 import 'package:siraty/features/quran/data/datasource/quran_local_data_source.dart';
 import 'package:siraty/features/quran/data/repositories/quran_repository_impl.dart';
 import 'package:siraty/features/quran/domain/repositories/quran_repository.dart';
+import 'package:siraty/features/quran/domain/services/last_read_service.dart';
 import 'package:siraty/features/quran/domain/usecases/get_surahs_usecase.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
 
@@ -24,6 +26,9 @@ Future<void> setupServiceLocator() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(sharedPreferences);
   getIt.registerLazySingleton<Dio>(() => Dio());
+
+  // Services
+  await LastReadService.loadLastRead();
 
   // Data Sources
   getIt.registerLazySingleton<QuranLocalDataSource>(
@@ -59,6 +64,9 @@ Future<void> setupServiceLocator() async {
   );
 
   // Cubits
+  getIt.registerLazySingleton<ThemeCubit>(
+    () => ThemeCubit(sharedPreferences: getIt()),
+  );
   getIt.registerFactory<QuranCubit>(
     () => QuranCubit(getSurahsUseCase: getIt(), sharedPreferences: getIt()),
   );

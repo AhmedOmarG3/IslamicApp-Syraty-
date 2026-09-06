@@ -49,17 +49,17 @@ class QuickServicesGrid extends StatelessWidget {
                 child: _ServiceCard(
                   title: 'المسبحة',
                   icon: Icons.touch_app_rounded,
-                  color: const Color(0xFF3498DB), // Blue
+                  color: AppColors.accentGold,
                   onTap: () => context.push('/tasbeeh'),
                 ),
               ),
               AppSpacing.horizontalMd,
               Expanded(
                 child: _ServiceCard(
-                  title: 'القبلة',
-                  icon: Icons.explore_rounded,
-                  color: const Color(0xFF9B59B6), // Purple
-                  onTap: () {},
+                  title: 'الصلوات',
+                  icon: Icons.access_time_rounded,
+                  color: AppColors.secondaryGreen,
+                  onTap: () => context.push('/prayer'),
                 ),
               ),
             ],
@@ -89,13 +89,7 @@ class _ServiceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppColors.outline),
       ),
       child: Material(
         color: AppColors.transparent,
@@ -104,12 +98,12 @@ class _ServiceCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 20.h, horizontal: 12.w),
+            padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 10.w),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: EdgeInsets.all(12.w),
+                  padding: EdgeInsets.all(10.w),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
@@ -117,7 +111,7 @@ class _ServiceCard extends StatelessWidget {
                   child: Icon(
                     icon,
                     color: color,
-                    size: 28.sp,
+                    size: 24.sp,
                   ),
                 ),
                 AppSpacing.verticalSm,

@@ -4,65 +4,100 @@ import 'package:siraty/core/constants/dimensions.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 
 abstract class AppTheme {
+  /// Figma Luxury Islamic Light Theme (Matching user screenshot)
   static ThemeData get lightTheme {
+    const colorScheme = ColorScheme.light(
+      primary: AppColors.sageGreenDark,
+      onPrimary: AppColors.white,
+      primaryContainer: AppColors.navPillActiveLight,
+      onPrimaryContainer: AppColors.textDarkPrimary,
+      secondary: AppColors.accentGold,
+      onSecondary: AppColors.white,
+      surface: AppColors.cardLight,
+      onSurface: AppColors.textDarkPrimary,
+      error: AppColors.errorRed,
+      outline: AppColors.borderLight,
+    );
+
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.light,
       fontFamily: AppTextStyles.fontFamilyAmiri,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primaryGreen,
-        primary: AppColors.primaryGreen,
-        secondary: AppColors.secondaryGreen,
-        surface: AppColors.surfaceLight,
-        error: AppColors.errorRed,
-      ),
-      scaffoldBackgroundColor: AppColors.surfaceLight,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: AppColors.bgLight,
+      cardColor: AppColors.cardLight,
+      dividerColor: AppColors.borderLight,
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surfaceLight,
-        elevation: AppDimensions.elevationFlat,
+        backgroundColor: AppColors.bgLight,
+        foregroundColor: AppColors.textDarkPrimary,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTextStyles.appBarTitle,
+        toolbarHeight: AppDimensions.appBarHeight,
+        titleTextStyle: AppTextStyles.appBarTitle.copyWith(color: AppColors.textDarkPrimary),
+        iconTheme: const IconThemeData(color: AppColors.textDarkPrimary),
       ),
       cardTheme: CardThemeData(
-        color: AppColors.cardSurface,
-        elevation: AppDimensions.elevationLow,
+        color: AppColors.cardLight,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          side: const BorderSide(color: AppColors.borderLight),
         ),
       ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          borderSide: const BorderSide(color: AppColors.grey),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          borderSide: const BorderSide(color: AppColors.primaryGreen),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
-          borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
-        ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.bgLight,
+        selectedItemColor: AppColors.sageGreenDark,
+        unselectedItemColor: AppColors.textDarkMuted,
       ),
-      dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.white,
-        elevation: AppDimensions.elevationMedium,
+    );
+  }
+
+  /// Figma Luxury Islamic Dark Theme
+  static ThemeData get darkTheme {
+    const colorScheme = ColorScheme.dark(
+      primary: AppColors.sageGreen,
+      onPrimary: AppColors.bgDark,
+      primaryContainer: AppColors.cardHighlight,
+      onPrimaryContainer: AppColors.textWhite,
+      secondary: AppColors.accentGold,
+      onSecondary: AppColors.bgDark,
+      surface: AppColors.cardDark,
+      onSurface: AppColors.textWhite,
+      error: AppColors.errorRed,
+      outline: AppColors.borderGreen,
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: AppTextStyles.fontFamilyAmiri,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: AppColors.bgDark,
+      cardColor: AppColors.cardDark,
+      dividerColor: AppColors.borderGreen,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.bgDark,
+        foregroundColor: AppColors.textWhite,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        toolbarHeight: AppDimensions.appBarHeight,
+        titleTextStyle: AppTextStyles.appBarTitle.copyWith(color: AppColors.textWhite),
+        iconTheme: const IconThemeData(color: AppColors.textWhite),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.cardDark,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          side: const BorderSide(color: AppColors.borderGreen),
         ),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryGreen,
-          foregroundColor: AppColors.white,
-          minimumSize: Size(double.infinity, AppDimensions.buttonHeight),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
-          ),
-          textStyle: AppTextStyles.titleMedium.copyWith(color: AppColors.white),
-        ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.bgDark,
+        selectedItemColor: AppColors.sageGreen,
+        unselectedItemColor: AppColors.textDimmed,
       ),
     );
   }

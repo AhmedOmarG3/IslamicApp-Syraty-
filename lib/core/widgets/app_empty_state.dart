@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/spacing.dart';
 import 'package:siraty/core/constants/text_styles.dart';
@@ -20,21 +19,21 @@ class AppEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(AppSpacing.xl),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
               Icon(
                 icon,
-                size: 64.sp,
-                color: AppColors.grey,
+                size: 56,
+                color: AppColors.textSecondary,
               ),
               AppSpacing.verticalLg,
             ],
             Text(
               title,
-              style: AppTextStyles.titleMedium.copyWith(color: AppColors.grey),
+              style: AppTextStyles.titleMedium,
               textAlign: TextAlign.center,
             ),
             if (subtitle != null) ...[

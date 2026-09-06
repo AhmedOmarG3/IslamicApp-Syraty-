@@ -31,8 +31,9 @@ android {
         applicationId = "com.ahmed.siraty"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdkVersion = flutter.minSdkVersion
         targetSdk = 35
+        multiDexEnabled = true
 
         versionCode 4   
         versionName "1.0.3" 
@@ -48,9 +49,11 @@ signingConfigs {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("release")
+            if (keystorePropertiesFile.exists() && keystoreProperties["storeFile"] && file(keystoreProperties["storeFile"]).exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 }

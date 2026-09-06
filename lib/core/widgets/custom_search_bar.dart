@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/dimensions.dart';
+import 'package:siraty/core/constants/text_styles.dart';
 
-class CustomSearchAppBar extends StatelessWidget implements PreferredSizeWidget {
+class CustomSearchAppBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final String title;
   final String hintText;
   final TextEditingController searchController;
@@ -23,37 +24,35 @@ class CustomSearchAppBar extends StatelessWidget implements PreferredSizeWidget 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: isSearching
-          ? TextField(
-              controller: searchController,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: hintText,
-                border: InputBorder.none,
-              ),
-            )
-          : Text(
-              title,
-              style: const TextStyle(
-                color: AppColors.primaryGreen,
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-              ),
-            ),
+      title: isSearching ? _searchField() : _title(),
       actions: [
-        isSearching
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: onClosePressed,
-              )
-            : IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: onSearchPressed,
-              ),
+        IconButton(
+          tooltip: isSearching ? 'إغلاق البحث' : 'بحث',
+          onPressed: isSearching ? onClosePressed : onSearchPressed,
+          icon: Icon(isSearching ? Icons.close_rounded : Icons.search_rounded),
+        ),
       ],
     );
   }
 
+  Widget _searchField() {
+    return TextField(
+      controller: searchController,
+      autofocus: true,
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.start,
+      style: AppTextStyles.bodyLarge,
+      decoration: InputDecoration.collapsed(
+        hintText: hintText,
+        hintStyle: AppTextStyles.bodyMedium,
+      ),
+    );
+  }
+
+  Widget _title() {
+    return Text(title, maxLines: 1, overflow: TextOverflow.ellipsis);
+  }
+
   @override
-  Size get preferredSize => Size.fromHeight(AppDimensions.appBarHeight);
+  Size get preferredSize => const Size.fromHeight(AppDimensions.appBarHeight);
 }

@@ -22,7 +22,7 @@ class AppDialog {
             borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
           ),
           child: Padding(
-            padding: EdgeInsets.all(AppDimensions.cardPadding),
+            padding: const EdgeInsets.all(AppDimensions.cardPadding),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,

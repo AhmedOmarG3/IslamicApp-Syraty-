@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/dimensions.dart';
 import 'package:siraty/core/constants/text_styles.dart';
@@ -35,27 +34,34 @@ class AppTextField extends StatelessWidget {
       onChanged: onChanged,
       style: AppTextStyles.bodyLarge,
       textDirection: TextDirection.rtl,
+      textAlign: TextAlign.start,
       decoration: InputDecoration(
         hintText: hintText,
         labelText: labelText,
         hintStyle: AppTextStyles.bodyMedium,
-        labelStyle: AppTextStyles.titleMedium.copyWith(color: AppColors.primaryGreen),
+        labelStyle: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.primaryGreen,
+          fontWeight: FontWeight.bold,
+        ),
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
         filled: true,
-        fillColor: AppColors.white,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        fillColor: AppColors.cardSurface,
+        contentPadding: const EdgeInsetsDirectional.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: const BorderSide(color: AppColors.primaryGreen),
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: const BorderSide(color: AppColors.primaryGreen),
+          borderSide: const BorderSide(color: AppColors.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          borderSide: BorderSide(color: AppColors.primaryGreen, width: 2.w),
+          borderSide: const BorderSide(color: AppColors.primaryGreen, width: 2),
         ),
       ),
     );

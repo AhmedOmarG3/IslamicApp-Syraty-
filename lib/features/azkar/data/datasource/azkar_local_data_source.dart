@@ -8,10 +8,16 @@ abstract class AzkarLocalDataSource {
 }
 
 class AzkarLocalDataSourceImpl implements AzkarLocalDataSource {
+  List<AzkarModel>? _cachedAzkar;
+
   @override
   Future<List<AzkarModel>> getAllAzkar() async {
+    if (_cachedAzkar != null) return _cachedAzkar!;
     final String jsonString = await rootBundle.loadString(AppAssets.adhkarJson);
-    List<dynamic> jsonResponse = json.decode(jsonString);
-    return jsonResponse.map((item) => AzkarModel.fromJson(item)).toList();
+    final List<dynamic> jsonResponse = json.decode(jsonString);
+    _cachedAzkar = jsonResponse
+        .map((item) => AzkarModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+    return _cachedAzkar!;
   }
 }

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:siraty/core/constants/assets.dart';
 import 'package:siraty/core/constants/colors.dart';
-import 'package:siraty/core/constants/app_constants.dart';
+import 'package:siraty/core/constants/text_styles.dart';
+import 'package:siraty/core/widgets/islamic_pattern_card.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -11,7 +13,7 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeIn;
 
@@ -20,14 +22,21 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     super.initState();
     _fadeController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1400),
     );
 
-    _fadeIn = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeIn),
+    _fadeIn = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeIn,
     );
 
     _fadeController.forward();
+
+    Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        context.go('/home');
+      }
+    });
   }
 
   @override
@@ -39,69 +48,99 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.darkTeal, AppColors.accentMint],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      backgroundColor: AppColors.bgDark,
+      body: Stack(
+        children: [
+          // Background Islamic Pattern Overlay
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    Color(0xFF163E31),
+                    Color(0xFF0C1B16),
+                  ],
+                ),
+              ),
+              child: const CustomPaint(
+                painter: IslamicPatternPainter(
+                  strokeColor: Color(0x14FFFFFF),
+                  cellSize: 54.0,
+                  strokeWidth: 1.0,
+                ),
+              ),
+            ),
           ),
-        ),
-        width: double.infinity,
-        child: FadeTransition(
-          opacity: _fadeIn,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(AppAssets.logoCrescent),
-              const SizedBox(height: 20),
-              const Text(
-                AppConstants.appName,
-                style: TextStyle(
-                  fontSize: 40,
-                  color: AppColors.white,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Amiri',
+
+          // Subtle Radial Glow
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.0, -0.2),
+                  radius: 0.9,
+                  colors: [
+                    Colors.transparent,
+                    AppColors.bgDark.withValues(alpha: 0.6),
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30.0),
-                child: Text(
-                  'رحلة إيمانية في قلب القرآن الكريم\nاستمع، اقرأ، وتدبر في كل وقت ومكان',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 22,
-                    color: Colors.white70,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 50),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                ),
-                onPressed: () {
-                  context.go('/home');
-                },
-                child: const Text(
-                  ' ابدأ',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+
+          // Centered Brand Content matching user's image
+          Center(
+            child: FadeTransition(
+              opacity: _fadeIn,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Gold 8-point star
+                  Icon(
+                    Icons.flare_rounded,
+                    size: 36.r,
+                    color: AppColors.accentGold,
+                  ),
+                  SizedBox(height: 16.h),
+
+                  // Brand name "سِيرتي"
+                  Text(
+                    'سِيرتي',
+                    style: AppTextStyles.displayLarge.copyWith(
+                      fontSize: 44.sp,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                      color: AppColors.textWhite,
+                    ),
+                  ),
+
+                  // Flourish golden underline
+                  Container(
+                    width: 70.w,
+                    height: 2.h,
+                    margin: EdgeInsets.only(top: 4.h, bottom: 16.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGold,
+                      borderRadius: BorderRadius.circular(2.r),
+                    ),
+                  ),
+
+                  // Tagline
+                  Text(
+                    'رفيقك الهادئ في يومك',
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 14.sp,
+                      color: AppColors.textMuted,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

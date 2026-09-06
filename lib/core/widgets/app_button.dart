@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/dimensions.dart';
 import 'package:siraty/core/constants/text_styles.dart';
@@ -38,9 +37,12 @@ class AppButton extends StatelessWidget {
           height: buttonHeight,
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
-              side: BorderSide(color: AppColors.primaryGreen, width: 1.5.w),
+              side: const BorderSide(
+                color: AppColors.primaryGreen,
+                width: 1.5,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               ),
             ),
             onPressed: isDisabled ? null : onPressed,
@@ -57,7 +59,7 @@ class AppButton extends StatelessWidget {
               foregroundColor: AppColors.primaryGreen,
               elevation: AppDimensions.elevationFlat,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               ),
             ),
             onPressed: isDisabled ? null : onPressed,
@@ -72,9 +74,9 @@ class AppButton extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: AppColors.white,
-              elevation: AppDimensions.elevationLow,
+              elevation: AppDimensions.elevationFlat,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               ),
             ),
             onPressed: isDisabled ? null : onPressed,
@@ -87,10 +89,10 @@ class AppButton extends StatelessWidget {
   Widget _buildChild(Color textColor) {
     if (isLoading) {
       return SizedBox(
-        width: 24.w,
-        height: 24.w,
+        width: 24,
+        height: 24,
         child: CircularProgressIndicator(
-          strokeWidth: 2.5.w,
+          strokeWidth: 2.5,
           color: textColor,
         ),
       );
@@ -100,11 +102,15 @@ class AppButton extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 22.sp, color: textColor),
-          SizedBox(width: 8.w),
-          Text(
-            label,
-            style: AppTextStyles.titleMedium.copyWith(color: textColor),
+          Icon(icon, size: 22, color: textColor),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.buttonLabel.copyWith(color: textColor),
+            ),
           ),
         ],
       );
@@ -112,7 +118,7 @@ class AppButton extends StatelessWidget {
 
     return Text(
       label,
-      style: AppTextStyles.titleMedium.copyWith(color: textColor),
+      style: AppTextStyles.buttonLabel.copyWith(color: textColor),
     );
   }
 }
