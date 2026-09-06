@@ -1,4 +1,0 @@
-interface:
-  display_name: "Siraty Guided Autopilot"
-  short_description: "Run Siraty specs task-by-task with learning logs"
-  default_prompt: "Use $siraty-autopilot to continue the next safe Siraty specification task, verify it, commit it locally, and teach me what was done."
