@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:siraty/app/di/service_locator.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/core/widgets/app_skeleton.dart';
+import 'package:siraty/core/widgets/islamic_share_card_dialog.dart';
 import 'package:siraty/features/azkar/data/datasource/azkar_local_data_source.dart';
 import 'package:siraty/features/azkar/data/models/azkar_model.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
@@ -88,9 +88,13 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                 title.contains('آذان') ||
                 title.contains('تشهد');
           case 'الاستيقاظ والنوم':
-            return title.contains('نوم') || title.contains('استيقاظ') || title.contains('فزع');
+            return title.contains('نوم') ||
+                title.contains('استيقاظ') ||
+                title.contains('فزع');
           case 'السفر':
-            return title.contains('سفر') || title.contains('ركوب') || title.contains('دابة');
+            return title.contains('سفر') ||
+                title.contains('ركوب') ||
+                title.contains('دابة');
           case 'الهم والكرب':
             return title.contains('كرب') ||
                 title.contains('هم') ||
@@ -159,15 +163,19 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
         duration: const Duration(seconds: 2),
         backgroundColor: AppColors.sageGreenDark,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       ),
     );
   }
 
   void _shareDua(String text, String category) {
-    Share.share(
-      '$text\n\n[$category - حصن المسلم · سِيرتي]',
-      subject: category,
+    IslamicShareCardDialog.show(
+      context,
+      type: ShareCardType.dua,
+      contentText: text,
+      title: category,
+      source: 'حصن المسلم',
     );
   }
 
@@ -187,32 +195,43 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
               children: [
                 // Search Input Field
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                   child: Container(
                     height: 48.h,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+                      color: isDark
+                          ? AppColors.cardDarkElevated
+                          : AppColors.cardLight,
                       borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
-                        color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                        color: isDark
+                            ? AppColors.borderSubtle
+                            : AppColors.borderLight,
                         width: 1,
                       ),
                     ),
                     child: TextField(
                       controller: _searchController,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                        color: isDark
+                            ? AppColors.textWhite
+                            : AppColors.textDarkPrimary,
                         fontSize: 14.sp,
                       ),
                       decoration: InputDecoration(
                         hintText: 'ابحث في ١٣٢ باباً وأدعية حصن المسلم...',
                         hintStyle: AppTextStyles.caption.copyWith(
-                          color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                          color: isDark
+                              ? AppColors.textDimmed
+                              : AppColors.textDarkMuted,
                           fontSize: 13.sp,
                         ),
                         prefixIcon: Icon(
                           Icons.search_rounded,
-                          color: isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
+                          color: isDark
+                              ? AppColors.sageGreen
+                              : AppColors.sageGreenDark,
                           size: 20.r,
                         ),
                         suffixIcon: _searchQuery.isNotEmpty
@@ -220,7 +239,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                                 icon: Icon(
                                   Icons.clear_rounded,
                                   size: 18.r,
-                                  color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                                  color: isDark
+                                      ? AppColors.textDimmed
+                                      : AppColors.textDarkMuted,
                                 ),
                                 onPressed: () {
                                   _searchController.clear();
@@ -264,16 +285,25 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                         },
                         child: Container(
                           margin: EdgeInsets.only(left: 8.w),
-                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 14.w, vertical: 6.h),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? (isDark ? AppColors.sageGreen : AppColors.navPillActiveLight)
-                                : (isDark ? AppColors.cardDark : AppColors.cardLight),
+                                ? (isDark
+                                    ? AppColors.sageGreen
+                                    : AppColors.navPillActiveLight)
+                                : (isDark
+                                    ? AppColors.cardDark
+                                    : AppColors.cardLight),
                             borderRadius: BorderRadius.circular(20.r),
                             border: Border.all(
                               color: isSelected
-                                  ? (isDark ? AppColors.sageGreen : AppColors.borderGold)
-                                  : (isDark ? AppColors.borderSubtle : AppColors.borderLight),
+                                  ? (isDark
+                                      ? AppColors.sageGreen
+                                      : AppColors.borderGold)
+                                  : (isDark
+                                      ? AppColors.borderSubtle
+                                      : AppColors.borderLight),
                             ),
                           ),
                           alignment: Alignment.center,
@@ -281,9 +311,15 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                             filter,
                             style: AppTextStyles.caption.copyWith(
                               color: isSelected
-                                  ? (isDark ? AppColors.bgDark : const Color(0xFF13362A))
-                                  : (isDark ? AppColors.textWhite : AppColors.textDarkPrimary),
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ? (isDark
+                                      ? AppColors.bgDark
+                                      : const Color(0xFF13362A))
+                                  : (isDark
+                                      ? AppColors.textWhite
+                                      : AppColors.textDarkPrimary),
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                               fontSize: 12.sp,
                             ),
                           ),
@@ -296,7 +332,8 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
 
                 // Counter bar
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 20.w, vertical: 4.h),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -304,7 +341,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                         'الأبواب المتاحة',
                         style: AppTextStyles.caption.copyWith(
                           fontSize: 12.sp,
-                          color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                          color: isDark
+                              ? AppColors.textDimmed
+                              : AppColors.textDarkMuted,
                         ),
                       ),
                       Text(
@@ -326,16 +365,20 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                           child: Text(
                             'لم يتم العثور على أذكار مطابقة',
                             style: AppTextStyles.bodyMedium.copyWith(
-                              color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                              color: isDark
+                                  ? AppColors.textDimmed
+                                  : AppColors.textDarkMuted,
                             ),
                           ),
                         )
                       : ListView.builder(
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.w, vertical: 8.h),
                           itemCount: _filteredCategories.length,
                           itemBuilder: (context, index) {
                             final category = _filteredCategories[index];
-                            final isExpanded = _expandedCategoryIds.contains(category.id);
+                            final isExpanded =
+                                _expandedCategoryIds.contains(category.id);
 
                             return _buildCategoryCard(
                               category: category,
@@ -391,10 +434,14 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                     height: 36.r,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardHighlight : AppColors.iconBgCircleLight,
+                      color: isDark
+                          ? AppColors.cardHighlight
+                          : AppColors.iconBgCircleLight,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                        color: isDark
+                            ? AppColors.borderSubtle
+                            : AppColors.borderLight,
                       ),
                     ),
                     child: Text(
@@ -418,7 +465,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                           style: AppTextStyles.titleSmall.copyWith(
                             fontSize: 15.sp,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                            color: isDark
+                                ? AppColors.textWhite
+                                : AppColors.textDarkPrimary,
                           ),
                         ),
                         SizedBox(height: 2.h),
@@ -426,7 +475,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                           '${QuranMetadata.toArabicDigits(category.zekrItems.length)} أذكار / أدعية',
                           style: AppTextStyles.caption.copyWith(
                             fontSize: 11.sp,
-                            color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                            color: isDark
+                                ? AppColors.textDimmed
+                                : AppColors.textDarkMuted,
                           ),
                         ),
                       ],
@@ -438,7 +489,8 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                     isExpanded
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
-                    color: isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
+                    color:
+                        isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
                     size: 24.r,
                   ),
                 ],
@@ -457,19 +509,24 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
               child: Column(
                 children: category.zekrItems.map((item) {
                   final targetCount = item.count > 0 ? item.count : 1;
-                  final remaining = _getRemainingCount(category.id, item.id, targetCount);
+                  final remaining =
+                      _getRemainingCount(category.id, item.id, targetCount);
                   final isDone = remaining == 0;
 
                   return Container(
                     margin: EdgeInsets.only(bottom: 14.h),
                     padding: EdgeInsets.all(14.r),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDarkElevated : AppColors.cardLightElevated,
+                      color: isDark
+                          ? AppColors.cardDarkElevated
+                          : AppColors.cardLightElevated,
                       borderRadius: BorderRadius.circular(14.r),
                       border: Border.all(
                         color: isDone
                             ? AppColors.successGreen
-                            : (isDark ? AppColors.borderSubtle : AppColors.borderLight),
+                            : (isDark
+                                ? AppColors.borderSubtle
+                                : AppColors.borderLight),
                         width: isDone ? 1.2 : 1,
                       ),
                     ),
@@ -481,7 +538,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                           item.text,
                           style: AppTextStyles.bodyMedium.copyWith(
                             fontSize: 16.sp,
-                            color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                            color: isDark
+                                ? AppColors.textWhite
+                                : AppColors.textDarkPrimary,
                             height: 1.8,
                             fontFamily: AppTextStyles.fontFamilyAmiri,
                           ),
@@ -494,7 +553,8 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                             // Interactive Tap Counter Button
                             Expanded(
                               child: GestureDetector(
-                                onTap: () => _decrementCount(category.id, item.id, targetCount),
+                                onTap: () => _decrementCount(
+                                    category.id, item.id, targetCount),
                                 child: Container(
                                   padding: EdgeInsets.symmetric(vertical: 10.h),
                                   decoration: BoxDecoration(
@@ -515,7 +575,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                                         size: 18.r,
                                         color: isDone
                                             ? Colors.white
-                                            : (isDark ? AppColors.sageGreen : AppColors.accentGold),
+                                            : (isDark
+                                                ? AppColors.sageGreen
+                                                : AppColors.accentGold),
                                       ),
                                       SizedBox(width: 8.w),
                                       Text(
@@ -525,7 +587,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                                         style: AppTextStyles.caption.copyWith(
                                           color: isDone
                                               ? Colors.white
-                                              : (isDark ? AppColors.sageGreen : AppColors.white),
+                                              : (isDark
+                                                  ? AppColors.sageGreen
+                                                  : AppColors.white),
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13.sp,
                                         ),
@@ -546,7 +610,8 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                                   size: 20.r,
                                   color: AppColors.accentGold,
                                 ),
-                                onPressed: () => _resetCount(category.id, item.id, targetCount),
+                                onPressed: () => _resetCount(
+                                    category.id, item.id, targetCount),
                               ),
 
                             // Copy Button
@@ -555,7 +620,9 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                               icon: Icon(
                                 Icons.copy_rounded,
                                 size: 18.r,
-                                color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                                color: isDark
+                                    ? AppColors.textDimmed
+                                    : AppColors.textDarkMuted,
                               ),
                               onPressed: () => _copyDua(item.text),
                             ),
@@ -566,9 +633,12 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
                               icon: Icon(
                                 Icons.share_outlined,
                                 size: 18.r,
-                                color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                                color: isDark
+                                    ? AppColors.textDimmed
+                                    : AppColors.textDarkMuted,
                               ),
-                              onPressed: () => _shareDua(item.text, category.category),
+                              onPressed: () =>
+                                  _shareDua(item.text, category.category),
                             ),
                           ],
                         ),

@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:siraty/core/constants/colors.dart';
-import 'package:siraty/core/constants/text_styles.dart';
-import 'package:siraty/core/theme/theme_cubit.dart';
-import 'package:siraty/core/widgets/app_header_bar.dart';
-import 'package:siraty/core/widgets/ornament_divider.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../../app/di/service_locator.dart';
+import '../../../../core/constants/colors.dart';
+import '../../../../core/constants/text_styles.dart';
+import '../../../../core/services/prayer_scheduler_interface.dart';
+import '../../../../core/theme/theme_cubit.dart';
+import '../../../../core/widgets/app_header_bar.dart';
+import '../../../../core/widgets/ornament_divider.dart';
+import '../../../prayer/domain/entities/adhan_reciter.dart';
+import '../../../prayer/domain/entities/calculation_method_setting.dart';
+import '../../../prayer/domain/repositories/prayer_repository.dart';
+import '../../../prayer/domain/usecases/refresh_prayer_schedule_usecase.dart';
+import '../../../prayer/presentation/cubit/azan_cubit.dart';
+import '../../../prayer/presentation/cubit/azan_state.dart';
+import '../../../prayer/presentation/widgets/autostart_guide_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -16,7 +28,277 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final PrayerRepository _prayerRepo = getIt<PrayerRepository>();
+  final PrayerSchedulerInterface _scheduler = getIt<PrayerSchedulerInterface>();
+  final RefreshPrayerScheduleUseCase _refreshSchedule = getIt<RefreshPrayerScheduleUseCase>();
+
   bool _azanNotifications = true;
+  AdhanReciter _selectedReciter = AdhanReciter.defaultReciter;
+  AdhanReciter _selectedFajrReciter = AdhanReciter.defaultReciter;
+  CalculationMethodSetting _calculationSetting = const CalculationMethodSetting();
+
+  AudioPlayer? _audioPlayer;
+  String? _playingSampleType; // null, 'regular', or 'fajr'
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrayerSettings();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadPrayerSettings() async {
+    final prefNotifications = await _prayerRepo.getNotificationsEnabled();
+    final hasSystemPermission = await _scheduler.hasNotificationPermission();
+    // Notifications are only truly enabled if BOTH the user enabled them and Android granted permission
+    final notifications = prefNotifications && hasSystemPermission;
+    if (prefNotifications != notifications) {
+      await _prayerRepo.setNotificationsEnabled(notifications);
+    }
+
+    final reciter = await _prayerRepo.getSelectedReciter();
+    final fajrReciter = await _prayerRepo.getSelectedFajrReciter();
+    final method = await _prayerRepo.getCalculationMethodSetting();
+
+    if (mounted) {
+      setState(() {
+        _azanNotifications = notifications;
+        _selectedReciter = reciter;
+        _selectedFajrReciter = fajrReciter;
+        _calculationSetting = method;
+      });
+    }
+  }
+
+  Future<void> _toggleNotifications(bool val) async {
+    if (val) {
+      final granted = await _scheduler.requestNotificationPermission();
+      if (!granted) {
+        // User denied system notification permission
+        setState(() => _azanNotifications = false);
+        await _prayerRepo.setNotificationsEnabled(false);
+        return;
+      }
+
+      setState(() => _azanNotifications = true);
+      await _prayerRepo.setNotificationsEnabled(true);
+
+      await _scheduler.requestExactAlarmPermission();
+      await _scheduler.requestIgnoreBatteryOptimizations();
+
+      final isSupported = await _scheduler.isAutoStartSupported();
+      if (isSupported) {
+        final manufacturer = await _scheduler.getDeviceManufacturer();
+        if (mounted) {
+          await AutostartGuideDialog.show(
+            context,
+            manufacturer: manufacturer,
+            scheduler: _scheduler,
+          );
+        }
+      }
+    } else {
+      setState(() => _azanNotifications = false);
+      await _prayerRepo.setNotificationsEnabled(false);
+    }
+
+    await _refreshSchedule();
+  }
+
+  Future<void> _toggleSamplePlayback({required bool isFajr}) async {
+    final type = isFajr ? 'fajr' : 'regular';
+    if (_playingSampleType == type) {
+      await _audioPlayer?.stop();
+      if (mounted) setState(() => _playingSampleType = null);
+      return;
+    }
+
+    _audioPlayer ??= AudioPlayer();
+
+    try {
+      if (mounted) setState(() => _playingSampleType = type);
+      final assetPath = isFajr
+          ? _selectedFajrReciter.getAssetPathFor(isFajr: true)
+          : _selectedReciter.assetPath;
+      await _audioPlayer!.setAsset(assetPath);
+      await _audioPlayer!.play();
+      if (mounted) {
+        setState(() => _playingSampleType = null);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _playingSampleType = null);
+      }
+    }
+  }
+
+  void _showReciterPicker({required bool isFajr}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentSelected = isFajr ? _selectedFajrReciter : _selectedReciter;
+    final recitersList = isFajr ? AdhanReciter.fajrReciters : AdhanReciter.regularReciters;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isFajr ? 'اختر مؤذن صلاة الفجر' : 'اختر مؤذن باقي الصلوات',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                ),
+              ),
+              if (isFajr) ...[
+                SizedBox(height: 4.h),
+                Text(
+                  'أذان الفجر مخصص ويتضمن جملة (الصلاة خيرٌ من النوم)',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.accentGold,
+                    fontSize: 12.sp,
+                  ),
+                ),
+              ],
+              SizedBox(height: 14.h),
+              ...recitersList.map((reciter) {
+                final isSelected = reciter.id == currentSelected.id;
+                return ListTile(
+                  title: Text(
+                    reciter.displayName,
+                    style: AppTextStyles.titleSmall.copyWith(
+                      color: isSelected
+                          ? AppColors.accentGold
+                          : (isDark ? AppColors.textWhite : AppColors.textDarkPrimary),
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 14.sp,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(Icons.check_circle, color: AppColors.accentGold)
+                      : null,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    if (isFajr) {
+                      setState(() => _selectedFajrReciter = reciter);
+                      await _prayerRepo.setSelectedFajrReciter(reciter.id);
+                    } else {
+                      setState(() => _selectedReciter = reciter);
+                      await _prayerRepo.setSelectedReciter(reciter.id);
+                    }
+                    await _refreshSchedule();
+                    // Stop playing sample if running
+                    if (_playingSampleType != null) {
+                      await _audioPlayer?.stop();
+                      if (mounted) setState(() => _playingSampleType = null);
+                    }
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMethodPicker() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (ctx) {
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'طريقة حساب مواقيت الصلاة',
+                style: AppTextStyles.titleMedium.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                ),
+              ),
+              SizedBox(height: 14.h),
+              ...CalculationMethod.values.map((method) {
+                final isSelected = method == _calculationSetting.method;
+                final setting = _calculationSetting.copyWith(method: method);
+                return ListTile(
+                  title: Text(
+                    setting.methodArabicName,
+                    style: AppTextStyles.titleSmall.copyWith(
+                      color: isSelected
+                          ? AppColors.accentGold
+                          : (isDark ? AppColors.textWhite : AppColors.textDarkPrimary),
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 13.5.sp,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(Icons.check_circle, color: AppColors.accentGold)
+                      : null,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final updated = _calculationSetting.copyWith(method: method);
+                    setState(() => _calculationSetting = updated);
+                    if (mounted) {
+                      await context.read<AzanCubit>().changeCalculationMethod(updated);
+                      await _refreshSchedule();
+                    }
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _shareApp() {
+    const appUrl = 'https://play.google.com/store/apps/details?id=com.ahmed.siraty';
+    const message = '''🌙 تطبيق سِيرتي | رفيقك اليومي للقرآن والأذكار ومواقيت الصلاة
+
+قال رسول الله ﷺ: «مَن دلَّ على خيرٍ فله مثلُ أجرِ فاعلِه»
+
+✨ مميزات التطبيق:
+📖 القرآن الكريم كاملاً مع التفسير الميسر (يعمل بدون إنترنت).
+🕌 مواقيت الصلاة والأذان الدقيق بأصوات مؤذني الحرمين ومصر.
+📿 أذكار الصباح والمساء، حصن المسلم، وصحيح البخاري ومسلم.
+🧭 قبلة دقيقة، ويدجت الشاشة الرئيسية، وتصميم هادئ ومريح.
+🚫 تجربة نقية تماماً وبدون أي إعلانات لوجه الله تعالى.
+
+📲 حمّل التطبيق الآن وشاركه مع أحبابك:
+$appUrl''';
+
+    Share.share(
+      message,
+      subject: 'تطبيق سِيرتي - رفيقك اليومي',
+    );
+  }
+
+  Future<void> _rateApp() async {
+    const channel = MethodChannel('siraty/app_channel');
+    try {
+      await channel.invokeMethod<bool>('openStoreListing');
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +321,9 @@ class _SettingsPageState extends State<SettingsPage> {
               isDark: isDark,
               icon: Icons.nightlight_round,
               title: 'الوضع الليلي',
-              subtitle: isDark ? 'مفعّل — راحة للعين ليلاً' : 'معطّل — الوضع النهاري مفعّل',
+              subtitle: isDark
+                  ? 'مفعّل — راحة للعين ليلاً'
+                  : 'معطّل — الوضع النهاري مفعّل',
               trailing: Switch(
                 value: isDark,
                 activeTrackColor: AppColors.sageGreenContainer,
@@ -56,66 +340,226 @@ class _SettingsPageState extends State<SettingsPage> {
               isDark: isDark,
               icon: Icons.notifications_active_rounded,
               title: 'الأذان والتنبيهات',
-              subtitle: 'يُرفع الأذان ويصلك تنبيه عند كل صلاة',
+              subtitle: _azanNotifications
+                  ? 'يُرفع الأذان وتصلك تذكيرات قبل الصلاة بـ ١٠ دقائق'
+                  : 'التنبيهات والأذان معطّلة حالياً',
               trailing: Switch(
                 value: _azanNotifications,
                 activeTrackColor: AppColors.sageGreenContainer,
                 activeThumbColor: AppColors.sageGreen,
-                inactiveTrackColor: isDark ? AppColors.cardHighlight : AppColors.borderLight,
-                inactiveThumbColor: isDark ? AppColors.textMuted : AppColors.sageGreenDark,
-                onChanged: (val) => setState(() => _azanNotifications = val),
+                inactiveTrackColor:
+                    isDark ? AppColors.cardHighlight : AppColors.borderLight,
+                inactiveThumbColor:
+                    isDark ? AppColors.textMuted : AppColors.sageGreenDark,
+                onChanged: _toggleNotifications,
               ),
             ),
             SizedBox(height: 12.h),
 
-            // Azan Audio Test Button
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(vertical: 12.h),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
-                borderRadius: BorderRadius.circular(24.r),
-                border: Border.all(color: AppColors.borderGold, width: 1),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.play_arrow_rounded, color: AppColors.accentGold, size: 20.r),
-                  SizedBox(width: 6.w),
-                  Text(
-                    'استماع لمقطع الأذان',
+            // Autostart Card
+            InkWell(
+              onTap: () async {
+                final manufacturer = await _scheduler.getDeviceManufacturer();
+                if (context.mounted) {
+                  await AutostartGuideDialog.show(
+                    context,
+                    manufacturer: manufacturer,
+                    scheduler: _scheduler,
+                  );
+                }
+              },
+              borderRadius: BorderRadius.circular(18.r),
+              child: _buildSettingCard(
+                isDark: isDark,
+                icon: Icons.bolt_rounded,
+                title: 'بدء التشغيل التلقائي (Autostart)',
+                subtitle: 'لضمان دقة الأذان عند قفل الشاشة في الخلفية',
+                trailing: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.cardHighlight : AppColors.iconBgCircleLight,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.borderGold, width: 1),
+                  ),
+                  child: Text(
+                    'تفعيل',
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.accentGold,
                       fontWeight: FontWeight.bold,
+                      fontSize: 12.sp,
                     ),
                   ),
-                ],
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+
+            // 1. Fajr Adhan Selection Card (أذان صلاة الفجر)
+            InkWell(
+              onTap: () => _showReciterPicker(isFajr: true),
+              borderRadius: BorderRadius.circular(18.r),
+              child: _buildSettingCard(
+                isDark: isDark,
+                icon: Icons.wb_twilight_rounded,
+                title: 'صوت أذان صلاة الفجر',
+                subtitle: '${_selectedFajrReciter.displayName} (الصلاة خير من النوم)',
+                trailing: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                  size: 16.r,
+                ),
+              ),
+            ),
+            SizedBox(height: 6.h),
+
+            // Fajr Audio Sample Test Button
+            InkWell(
+              onTap: () => _toggleSamplePlayback(isFajr: true),
+              borderRadius: BorderRadius.circular(20.r),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: AppColors.borderGold.withValues(alpha: 0.5), width: 0.8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _playingSampleType == 'fajr' ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                      color: AppColors.accentGold,
+                      size: 18.r,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      _playingSampleType == 'fajr' ? 'إيقاف الاستماع' : 'استماع لمقطع أذان الفجر',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.accentGold,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 14.h),
+
+            // 2. Regular Prayers Adhan Selection Card (أذان باقي الصلوات)
+            InkWell(
+              onTap: () => _showReciterPicker(isFajr: false),
+              borderRadius: BorderRadius.circular(18.r),
+              child: _buildSettingCard(
+                isDark: isDark,
+                icon: Icons.record_voice_over_rounded,
+                title: 'صوت أذان باقي الصلوات',
+                subtitle: '${_selectedReciter.displayName} (الظهر، العصر، المغرب، العشاء)',
+                trailing: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                  size: 16.r,
+                ),
+              ),
+            ),
+            SizedBox(height: 6.h),
+
+            // Regular Prayers Audio Sample Test Button
+            InkWell(
+              onTap: () => _toggleSamplePlayback(isFajr: false),
+              borderRadius: BorderRadius.circular(20.r),
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 10.h),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: AppColors.borderGold.withValues(alpha: 0.5), width: 0.8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _playingSampleType == 'regular' ? Icons.stop_rounded : Icons.play_arrow_rounded,
+                      color: AppColors.accentGold,
+                      size: 18.r,
+                    ),
+                    SizedBox(width: 6.w),
+                    Text(
+                      _playingSampleType == 'regular' ? 'إيقاف الاستماع' : 'استماع لمقطع أذان باقي الصلوات',
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.accentGold,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             SizedBox(height: 16.h),
 
             // Location Card
-            _buildSettingCard(
-              isDark: isDark,
-              icon: Icons.location_on_outlined,
-              title: 'الموقع والمواقيت',
-              subtitle: 'القاهرة · مواقيت افتراضية',
-              trailing: Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.cardHighlight : AppColors.iconBgCircleLight,
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                child: Text(
-                  'تحديث',
-                  style: AppTextStyles.caption.copyWith(
-                    color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.bold,
+            BlocBuilder<AzanCubit, AzanState>(
+              builder: (context, state) {
+                String locationText = 'القاهرة (مصر)';
+                if (state is AzanLoadedState) {
+                  final loc = state.derivedToday.location;
+                  locationText = '${loc.cityName} (${loc.countryName})';
+                }
+
+                return InkWell(
+                  onTap: () => context.push('/prayer-location'),
+                  borderRadius: BorderRadius.circular(18.r),
+                  child: _buildSettingCard(
+                    isDark: isDark,
+                    icon: Icons.location_on_outlined,
+                    title: 'الموقع والمواقيت',
+                    subtitle: '$locationText · حساب فلكي محلي دقيق',
+                    trailing: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.cardHighlight
+                            : AppColors.iconBgCircleLight,
+                        borderRadius: BorderRadius.circular(16.r),
+                      ),
+                      child: Text(
+                        'تغيير',
+                        style: AppTextStyles.caption.copyWith(
+                          color: isDark
+                              ? AppColors.textWhite
+                              : AppColors.textDarkPrimary,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
+                );
+              },
+            ),
+            SizedBox(height: 12.h),
+
+            // Calculation Method Card
+            InkWell(
+              onTap: _showMethodPicker,
+              borderRadius: BorderRadius.circular(18.r),
+              child: _buildSettingCard(
+                isDark: isDark,
+                icon: Icons.tune_rounded,
+                title: 'طريقة الحساب ومذهب العصر',
+                subtitle: '${_calculationSetting.methodArabicName} · ${_calculationSetting.madhabArabicName}',
+                trailing: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                  size: 16.r,
                 ),
               ),
             ),
+            SizedBox(height: 16.h),
+
             const OrnamentDivider(),
             SizedBox(height: 12.h),
 
@@ -127,6 +571,45 @@ class _SettingsPageState extends State<SettingsPage> {
                 icon: Icons.monetization_on_outlined,
                 title: 'حاسبة الزكاة',
                 subtitle: 'طهّر مالك — بالجنيه المصري',
+                trailing: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                  size: 16.r,
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+
+            const OrnamentDivider(),
+            SizedBox(height: 12.h),
+
+            // Share App Card
+            InkWell(
+              onTap: _shareApp,
+              borderRadius: BorderRadius.circular(18.r),
+              child: _buildSettingCard(
+                isDark: isDark,
+                icon: Icons.share_rounded,
+                title: 'مشاركة التطبيق',
+                subtitle: 'الدال على الخير كفاعله — انشر التطبيق ولك الأجر',
+                trailing: Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                  size: 16.r,
+                ),
+              ),
+            ),
+            SizedBox(height: 12.h),
+
+            // Rate App Card
+            InkWell(
+              onTap: _rateApp,
+              borderRadius: BorderRadius.circular(18.r),
+              child: _buildSettingCard(
+                isDark: isDark,
+                icon: Icons.star_rate_rounded,
+                title: 'تقييم التطبيق',
+                subtitle: 'ادعمنا برأيك وتقييمك على متجر Google Play',
                 trailing: Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
@@ -176,7 +659,9 @@ class _SettingsPageState extends State<SettingsPage> {
             width: 38.r,
             height: 38.r,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.cardHighlight : AppColors.iconBgCircleLight,
+              color: isDark
+                  ? AppColors.cardHighlight
+                  : AppColors.iconBgCircleLight,
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -193,7 +678,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 Text(
                   title,
                   style: AppTextStyles.titleSmall.copyWith(
-                    color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                    color: isDark
+                        ? AppColors.textWhite
+                        : AppColors.textDarkPrimary,
                     fontSize: 15.sp,
                   ),
                 ),

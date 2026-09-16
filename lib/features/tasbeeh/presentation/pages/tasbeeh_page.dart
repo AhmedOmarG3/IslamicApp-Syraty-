@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
@@ -20,6 +21,9 @@ class _TasbeehPageState extends State<TasbeehPage>
   int _counter = 0;
   int _cycles = 0;
   int _selectedZikrIndex = 0;
+  bool _soundEnabled = true;
+
+  late final AudioPlayer _clickPlayer;
 
   // Animation controller for sliding and glowing beads
   late final AnimationController _beadController;
@@ -41,6 +45,10 @@ class _TasbeehPageState extends State<TasbeehPage>
   @override
   void initState() {
     super.initState();
+    _clickPlayer = AudioPlayer();
+    _clickPlayer.setAsset('assets/audio/tasbeeh_click.wav');
+    _clickPlayer.setVolume(0.7);
+
     _beadController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 320),
@@ -63,12 +71,26 @@ class _TasbeehPageState extends State<TasbeehPage>
 
   @override
   void dispose() {
+    _clickPlayer.dispose();
     _beadController.dispose();
     _buttonPressController.dispose();
     super.dispose();
   }
 
+  void _playClickSound() {
+    try {
+      SystemSound.play(SystemSoundType.click);
+      _clickPlayer.seek(Duration.zero);
+      _clickPlayer.play();
+    } catch (_) {}
+  }
+
   void _onIncrement() {
+    // Sound feedback
+    if (_soundEnabled) {
+      _playClickSound();
+    }
+
     // Haptic feedback
     HapticFeedback.lightImpact();
 
@@ -84,7 +106,8 @@ class _TasbeehPageState extends State<TasbeehPage>
     final targetOffset = startOffset + 1.0;
     _currentBeadOffset = targetOffset;
 
-    _beadAnimation = Tween<double>(begin: startOffset, end: targetOffset).animate(
+    _beadAnimation =
+        Tween<double>(begin: startOffset, end: targetOffset).animate(
       CurvedAnimation(parent: _beadController, curve: Curves.easeOutCubic),
     );
     _beadController.forward(from: 0.0);
@@ -99,21 +122,30 @@ class _TasbeehPageState extends State<TasbeehPage>
     });
   }
 
+  void _resetBeadOffset() {
+    _currentBeadOffset = 0.0;
+    _beadAnimation = Tween<double>(begin: 0.0, end: 0.0).animate(
+      CurvedAnimation(parent: _beadController, curve: Curves.easeOutCubic),
+    );
+    _beadController.reset();
+  }
+
   void _reset() {
     if (_counter == 0) return;
     HapticFeedback.mediumImpact();
     setState(() {
       _counter = 0;
+      _resetBeadOffset();
     });
 
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'تم تصفير العداد الحالي (اضغط مطولاً لتصفير الدورات)',
+          'تم تصفير العداد الحالي (اضغط مرتين لتصفير كل الدورات)',
           style: TextStyle(fontFamily: 'Amiri', fontSize: 13.sp),
         ),
-        backgroundColor: AppColors.cardDarkElevated,
+        backgroundColor: AppColors.accentMint,
         duration: const Duration(seconds: 2),
       ),
     );
@@ -125,6 +157,7 @@ class _TasbeehPageState extends State<TasbeehPage>
     setState(() {
       _counter = 0;
       _cycles = 0;
+      _resetBeadOffset();
     });
 
     ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -147,9 +180,44 @@ class _TasbeehPageState extends State<TasbeehPage>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: const AppHeaderBar(
+      appBar: AppHeaderBar(
         title: 'السبحة',
         showBackButton: false,
+        trailing: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _soundEnabled = !_soundEnabled);
+          },
+          child: Container(
+            width: 38.r,
+            height: 38.r,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? AppColors.cardDarkElevated
+                  : AppColors.cardLight,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: _soundEnabled
+                    ? AppColors.accentGold
+                    : (isDark
+                        ? AppColors.borderSubtle
+                        : AppColors.borderLight),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              _soundEnabled
+                  ? Icons.volume_up_rounded
+                  : Icons.volume_off_rounded,
+              size: 18.r,
+              color: _soundEnabled
+                  ? AppColors.accentGold
+                  : (isDark
+                      ? AppColors.textDimmed
+                      : AppColors.textDarkMuted),
+            ),
+          ),
+        ),
       ),
       body: Stack(
         children: [
@@ -158,7 +226,8 @@ class _TasbeehPageState extends State<TasbeehPage>
             child: IgnorePointer(
               child: CustomPaint(
                 painter: IslamicPatternPainter(
-                  strokeColor: AppColors.sageGreen.withValues(alpha: isDark ? 0.05 : 0.08),
+                  strokeColor: AppColors.sageGreen
+                      .withValues(alpha: isDark ? 0.05 : 0.08),
                   cellSize: 54.0,
                   strokeWidth: 0.9,
                 ),
@@ -198,19 +267,29 @@ class _TasbeehPageState extends State<TasbeehPage>
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? (isDark ? AppColors.sageGreen : const Color(0xFF1E4538))
-                                : (isDark ? AppColors.cardDark : AppColors.cardLight),
+                                ? (isDark
+                                    ? AppColors.sageGreen
+                                    : const Color(0xFF1E4538))
+                                : (isDark
+                                    ? AppColors.cardDark
+                                    : AppColors.cardLight),
                             borderRadius: BorderRadius.circular(22.r),
                             border: Border.all(
                               color: isSelected
-                                  ? (isDark ? AppColors.sageGreen : const Color(0xFF1E4538))
-                                  : (isDark ? AppColors.borderSubtle : AppColors.borderLight),
+                                  ? (isDark
+                                      ? AppColors.sageGreen
+                                      : const Color(0xFF1E4538))
+                                  : (isDark
+                                      ? AppColors.borderSubtle
+                                      : AppColors.borderLight),
                               width: 1,
                             ),
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: (isDark ? AppColors.sageGreen : const Color(0xFF1E4538))
+                                      color: (isDark
+                                              ? AppColors.sageGreen
+                                              : const Color(0xFF1E4538))
                                           .withValues(alpha: 0.25),
                                       blurRadius: 10,
                                       offset: const Offset(0, 3),
@@ -224,7 +303,9 @@ class _TasbeehPageState extends State<TasbeehPage>
                             style: AppTextStyles.caption.copyWith(
                               color: isSelected
                                   ? Colors.white
-                                  : (isDark ? AppColors.textWhite : AppColors.textDarkPrimary),
+                                  : (isDark
+                                      ? AppColors.textWhite
+                                      : AppColors.textDarkPrimary),
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -248,7 +329,9 @@ class _TasbeehPageState extends State<TasbeehPage>
                     style: AppTextStyles.ayahText.copyWith(
                       fontSize: 32.sp,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
+                      color: isDark
+                          ? AppColors.sageGreen
+                          : AppColors.sageGreenDark,
                       shadows: [
                         Shadow(
                           color: AppColors.sageGreen.withValues(alpha: 0.3),
@@ -287,8 +370,8 @@ class _TasbeehPageState extends State<TasbeehPage>
                   child: Center(
                     child: LayoutBuilder(
                       builder: (context, constraints) {
-                        final buttonSize =
-                            (constraints.maxHeight * 0.84).clamp(160.0, 230.0.r);
+                        final buttonSize = (constraints.maxHeight * 0.84)
+                            .clamp(160.0, 230.0.r);
 
                         return GestureDetector(
                           onTap: _onIncrement,
@@ -383,12 +466,15 @@ class _TasbeehPageState extends State<TasbeehPage>
                         : AppColors.cardLight,
                     borderRadius: BorderRadius.circular(28.r),
                     border: Border.all(
-                      color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                      color: isDark
+                          ? AppColors.borderSubtle
+                          : AppColors.borderLight,
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+                        color: Colors.black
+                            .withValues(alpha: isDark ? 0.15 : 0.03),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -419,7 +505,9 @@ class _TasbeehPageState extends State<TasbeehPage>
                             Text(
                               '$_cycles دورة مكتملة',
                               style: AppTextStyles.caption.copyWith(
-                                color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                                color: isDark
+                                    ? AppColors.textWhite
+                                    : AppColors.textDarkPrimary,
                                 fontSize: 13.sp,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -432,32 +520,41 @@ class _TasbeehPageState extends State<TasbeehPage>
                       Container(
                         width: 1,
                         height: 22.h,
-                        color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                        color: isDark
+                            ? AppColors.borderSubtle
+                            : AppColors.borderLight,
                       ),
 
-                      // Reset Button on the right (Single tap: reset counter, Long press: reset all)
+                      // Reset Button on the right (Single tap: reset counter, Double tap / Long press: reset all)
                       GestureDetector(
                         onTap: _reset,
+                        onDoubleTap: _resetAll,
                         onLongPress: _resetAll,
                         child: Tooltip(
-                          message: 'تصفير العداد (اضغط مطولاً لتصفير الدورات)',
+                          message: 'تصفير العداد (اضغط مرتين لتصفير كل الدورات)',
                           child: Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 18.w,
                               vertical: 6.h,
                             ),
                             decoration: BoxDecoration(
-                              color: isDark ? AppColors.cardDarkElevated : AppColors.cardLightElevated,
+                              color: isDark
+                                  ? AppColors.cardDarkElevated
+                                  : AppColors.cardLightElevated,
                               borderRadius: BorderRadius.circular(16.r),
                               border: Border.all(
-                                color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                                color: isDark
+                                    ? AppColors.borderSubtle
+                                    : AppColors.borderLight,
                                 width: 1,
                               ),
                             ),
                             child: Text(
                               'تصفير',
                               style: AppTextStyles.caption.copyWith(
-                                color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                                color: isDark
+                                    ? AppColors.textMuted
+                                    : AppColors.textDarkMuted,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13.sp,
                               ),
@@ -564,21 +661,25 @@ class _AnimatedBeadsArcPainter extends CustomPainter {
 
       // A. Drop Shadow
       final shadowPaint = Paint()
-        ..color = Colors.black.withValues(alpha: (isSpecial ? 0.55 : 0.40) * opacity)
+        ..color =
+            Colors.black.withValues(alpha: (isSpecial ? 0.55 : 0.40) * opacity)
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, isSpecial ? 5.0 : 3.0);
-      canvas.drawCircle(Offset(x, y + (isSpecial ? 4.0 : 2.5)), beadRadius, shadowPaint);
+      canvas.drawCircle(
+          Offset(x, y + (isSpecial ? 4.0 : 2.5)), beadRadius, shadowPaint);
 
       // B. Multi-layered Radiant Golden Halo for the moving bead ("منورة")
       if (isSpecial) {
         // Outer soft golden aura
         final outerAuraPaint = Paint()
-          ..color = const Color(0xFFFFD56B).withValues(alpha: 0.55 * glowFactor * opacity)
+          ..color = const Color(0xFFFFD56B)
+              .withValues(alpha: 0.55 * glowFactor * opacity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16);
         canvas.drawCircle(Offset(x, y), beadRadius + 7, outerAuraPaint);
 
         // Inner bright radiant halo
         final innerAuraPaint = Paint()
-          ..color = const Color(0xFFFFEA9F).withValues(alpha: 0.75 * glowFactor * opacity)
+          ..color = const Color(0xFFFFEA9F)
+              .withValues(alpha: 0.75 * glowFactor * opacity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7);
         canvas.drawCircle(Offset(x, y), beadRadius + 2.5, innerAuraPaint);
       }
@@ -623,13 +724,15 @@ class _AnimatedBeadsArcPainter extends CustomPainter {
         final rimPaint = Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.0
-          ..color = const Color(0xFFFFF3D0).withValues(alpha: 0.75 * glowFactor * opacity);
+          ..color = const Color(0xFFFFF3D0)
+              .withValues(alpha: 0.75 * glowFactor * opacity);
         canvas.drawCircle(Offset(x, y), beadRadius, rimPaint);
       }
 
       // E. Specular Highlight / Light Sparkle
       final highlightPaint = Paint()
-        ..color = Colors.white.withValues(alpha: (isSpecial ? 0.85 : 0.45) * opacity);
+        ..color =
+            Colors.white.withValues(alpha: (isSpecial ? 0.85 : 0.45) * opacity);
       canvas.drawCircle(
         Offset(x - beadRadius * 0.32, y - beadRadius * 0.32),
         beadRadius * (isSpecial ? 0.26 : 0.20),

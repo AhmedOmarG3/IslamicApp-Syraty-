@@ -7,16 +7,27 @@ import 'package:siraty/features/azkar/data/repositories/azkar_repository_impl.da
 import 'package:siraty/features/azkar/domain/repositories/azkar_repository.dart';
 import 'package:siraty/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:siraty/features/azkar/presentation/cubit/azkar_cubit.dart';
-import 'package:siraty/features/prayer/data/datasource/prayer_remote_data_source.dart';
+import 'package:siraty/core/services/native_prayer_scheduler.dart';
+import 'package:siraty/core/services/prayer_scheduler_interface.dart';
+import 'package:siraty/features/prayer/data/datasource/city_database_data_source.dart';
+import 'package:siraty/features/prayer/data/datasource/prayer_calculation_data_source.dart';
 import 'package:siraty/features/prayer/data/repositories/prayer_repository_impl.dart';
+import 'package:siraty/features/prayer/data/services/location_service.dart';
 import 'package:siraty/features/prayer/domain/repositories/prayer_repository.dart';
+import 'package:siraty/features/prayer/domain/usecases/get_next_prayer_usecase.dart';
+import 'package:siraty/features/prayer/domain/usecases/get_prayer_snapshot_usecase.dart';
 import 'package:siraty/features/prayer/domain/usecases/get_prayer_timings_usecase.dart';
+import 'package:siraty/features/prayer/domain/usecases/refresh_prayer_schedule_usecase.dart';
+import 'package:siraty/features/prayer/domain/usecases/set_prayer_location_usecase.dart';
 import 'package:siraty/features/prayer/presentation/cubit/azan_cubit.dart';
 import 'package:siraty/features/quran/data/datasource/quran_local_data_source.dart';
 import 'package:siraty/features/quran/data/repositories/quran_repository_impl.dart';
+import 'package:siraty/features/quran/data/services/quran_audio_service.dart';
 import 'package:siraty/features/quran/domain/repositories/quran_repository.dart';
 import 'package:siraty/features/quran/domain/services/last_read_service.dart';
 import 'package:siraty/features/quran/domain/usecases/get_surahs_usecase.dart';
+import 'package:siraty/features/quran/presentation/cubit/mushaf_settings_cubit.dart';
+import 'package:siraty/features/quran/presentation/cubit/quran_audio_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
 
 final GetIt getIt = GetIt.instance;
@@ -37,9 +48,21 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<AzkarLocalDataSource>(
     () => AzkarLocalDataSourceImpl(),
   );
-  getIt.registerLazySingleton<PrayerRemoteDataSource>(
-    () => PrayerRemoteDataSourceImpl(dio: getIt()),
+  getIt.registerLazySingleton<PrayerCalculationDataSource>(
+    () => const PrayerCalculationDataSourceImpl(),
   );
+  getIt.registerLazySingleton<CityDatabaseDataSource>(
+    () => CityDatabaseDataSourceImpl(),
+  );
+
+  // Services
+  getIt.registerLazySingleton<LocationService>(
+    () => LocationServiceImpl(cityDatabase: getIt()),
+  );
+  getIt.registerLazySingleton<PrayerSchedulerInterface>(
+    () => const NativePrayerScheduler(),
+  );
+  getIt.registerLazySingleton<QuranAudioService>(() => QuranAudioService());
 
   // Repositories
   getIt.registerLazySingleton<QuranRepository>(
@@ -49,7 +72,10 @@ Future<void> setupServiceLocator() async {
     () => AzkarRepositoryImpl(localDataSource: getIt()),
   );
   getIt.registerLazySingleton<PrayerRepository>(
-    () => PrayerRepositoryImpl(remoteDataSource: getIt()),
+    () => PrayerRepositoryImpl(
+      calculationDataSource: getIt(),
+      sharedPreferences: getIt(),
+    ),
   );
 
   // UseCases
@@ -62,10 +88,33 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<GetPrayerTimingsUseCase>(
     () => GetPrayerTimingsUseCase(repository: getIt()),
   );
+  getIt.registerLazySingleton<GetPrayerSnapshotUseCase>(
+    () => GetPrayerSnapshotUseCase(repository: getIt()),
+  );
+  getIt.registerLazySingleton<GetNextPrayerUseCase>(
+    () => GetNextPrayerUseCase(repository: getIt()),
+  );
+  getIt.registerLazySingleton<SetPrayerLocationUseCase>(
+    () => SetPrayerLocationUseCase(repository: getIt()),
+  );
+  getIt.registerLazySingleton<RefreshPrayerScheduleUseCase>(
+    () => RefreshPrayerScheduleUseCase(
+      repository: getIt(),
+      scheduler: getIt(),
+    ),
+  );
 
   // Cubits
   getIt.registerLazySingleton<ThemeCubit>(
     () => ThemeCubit(sharedPreferences: getIt()),
+  );
+  // Audio playback is app-global state (mini player survives navigation)
+  getIt.registerLazySingleton<QuranAudioCubit>(
+    () => QuranAudioCubit(service: getIt()),
+  );
+  // Mushaf reading preferences (font size, paper theme) — persisted
+  getIt.registerLazySingleton<MushafSettingsCubit>(
+    () => MushafSettingsCubit(prefs: getIt<SharedPreferences>()),
   );
   getIt.registerFactory<QuranCubit>(
     () => QuranCubit(getSurahsUseCase: getIt(), sharedPreferences: getIt()),
@@ -74,6 +123,13 @@ Future<void> setupServiceLocator() async {
     () => AzkarCubit(getAzkarUseCase: getIt()),
   );
   getIt.registerFactory<AzanCubit>(
-    () => AzanCubit(getPrayerTimingsUseCase: getIt()),
+    () => AzanCubit(
+      getPrayerSnapshotUseCase: getIt(),
+      getNextPrayerUseCase: getIt(),
+      setPrayerLocationUseCase: getIt(),
+      refreshPrayerScheduleUseCase: getIt(),
+      locationService: getIt(),
+      prayerRepository: getIt(),
+    ),
   );
 }

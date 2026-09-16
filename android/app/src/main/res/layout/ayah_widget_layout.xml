@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:paddingLeft="11dp"
+    android:paddingRight="11dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="9dp"
+    android:gravity="center"
+    android:layoutDirection="rtl">
+
+    <!-- Inner Decorative Islamic Frame with safe inner padding so text doesn't touch ornaments -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@drawable/widget_inner_frame"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="8dp"
+        android:gravity="center">
+
+        <!-- Header Row: Title & Surah Reference Pill -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Title Badge -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✦ آية اليوم"
+                android:textColor="#F3D295"
+                android:textSize="12.5sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <!-- Surah & Ayah Pill -->
+            <TextView
+                android:id="@+id/widget_ref_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/widget_pill_bg"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="سورة البقرة · ٢٥٥"
+                android:textColor="#FFD98E"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Subtle Rosette Divider (ImageView used for RemoteViews compatibility) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="0.8dp"
+                android:layout_weight="1"
+                android:background="#20FFFFFF" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" ۞ "
+                android:textColor="#66E5C78A"
+                android:textSize="8sp" />
+
+            <ImageView
+                android:layout_width="0dp"
+                android:layout_height="0.8dp"
+                android:layout_weight="1"
+                android:background="#20FFFFFF" />
+        </LinearLayout>
+
+        <!-- Center: The Daily Ayah Text (Generous padding, high readability, safe breathing room) -->
+        <TextView
+            android:id="@+id/widget_verse_text"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:text="﴿ وَقُل رَّبِّ زِدْنِي عِلْمًا ﴾"
+            android:textColor="#FFFFFF"
+            android:textSize="16.5sp"
+            android:lineSpacingExtra="6.5dp"
+            android:ellipsize="end"
+            android:maxLines="4"
+            android:textStyle="bold" />
+
+        <!-- Subtle Footer: App Branding -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="سِيرتي"
+            android:textColor="#45FFFFFF"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+</LinearLayout>

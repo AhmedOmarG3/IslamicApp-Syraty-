@@ -79,7 +79,8 @@ class LastReadService {
   /// Helper to load a SurahModel directly by its number
   static Future<SurahModel?> loadSurah(int surahNumber) async {
     try {
-      final String jsonString = await rootBundle.loadString(AppAssets.quranJson);
+      final String jsonString =
+          await rootBundle.loadString(AppAssets.quranJson);
       final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
       final entry = jsonMap[surahNumber.toString()];
       if (entry != null) {
@@ -89,4 +90,3 @@ class LastReadService {
     return null;
   }
 }
-

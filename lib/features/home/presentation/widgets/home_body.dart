@@ -6,7 +6,6 @@ import 'package:siraty/features/home/presentation/widgets/home_daily_cards.dart'
 import 'package:siraty/features/home/presentation/widgets/home_header_banner.dart';
 import 'package:siraty/features/home/presentation/widgets/home_quick_actions.dart';
 import 'package:siraty/features/home/presentation/widgets/home_sections_grid.dart';
-import 'package:siraty/features/home/presentation/widgets/home_streak_tracker.dart';
 import 'package:siraty/features/home/presentation/widgets/home_today_prayers.dart';
 
 class HomeBody extends StatelessWidget {
@@ -42,13 +41,9 @@ class HomeBody extends StatelessWidget {
 
           // 6. Islamic Ornamental Divider
           const OrnamentDivider(),
-          SizedBox(height: 8.h),
-
-          // 7. Streak Tracker (12 Days)
-          const HomeStreakTracker(),
           SizedBox(height: 16.h),
 
-          // 8. Main Feature Grid Tiles
+          // 7. Main Feature Grid Tiles
           const HomeSectionsGrid(),
           SizedBox(height: 24.h),
         ],

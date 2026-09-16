@@ -21,7 +21,8 @@ class QuranCubit extends Cubit<QuranState> {
     try {
       final surahs = await getSurahsUseCase();
       _cachedSurahs = surahs.cast<SurahModel>();
-      int? lastReadIndex = sharedPreferences.getInt(AppConstants.lastReadIndexKey);
+      int? lastReadIndex =
+          sharedPreferences.getInt(AppConstants.lastReadIndexKey);
       emit(QuranLoaded(
         surahs: _cachedSurahs!,
         lastReadSurahIndex: lastReadIndex,

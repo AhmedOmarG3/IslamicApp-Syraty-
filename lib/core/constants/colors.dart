@@ -9,14 +9,23 @@ abstract class AppColors {
   static const Color scaffoldBackground = bgDark;
 
   // === Figma Luxury Islamic Light Palette ===
-  static const Color bgLight = Color(0xFFF9F6EE); // Warm ivory background from screenshot
-  static const Color cardLight = Color(0xFFFFFDF9); // Clean warm white card surface
-  static const Color cardLightElevated = Color(0xFFF4ECE1); // Slightly elevated beige card
-  static const Color borderLight = Color(0xFFEADBCE); // Subtle warm gold-beige border
-  static const Color navPillActiveLight = Color(0xFFEFE7D8); // Navigation active tab pill
-  static const Color iconBgCircleLight = Color(0xFFF0EADB); // Feature icon background circle
-  static const Color textDarkPrimary = Color(0xFF1E2824); // Primary text in light mode
-  static const Color textDarkMuted = Color(0xFF6C7D75); // Muted text in light mode
+  static const Color bgLight =
+      Color(0xFFF9F6EE); // Warm ivory background from screenshot
+  static const Color cardLight =
+      Color(0xFFFFFDF9); // Clean warm white card surface
+  static const Color cardLightElevated =
+      Color(0xFFF4ECE1); // Slightly elevated beige card
+  static const Color borderLight =
+      Color(0xFFEADBCE); // Subtle warm gold-beige border
+  static const Color navPillActiveLight =
+      Color(0xFFEFE7D8); // Navigation active tab pill
+  static const Color iconBgCircleLight =
+      Color(0xFFF0EADB); // Feature icon background circle
+  static const Color textDarkPrimary =
+      Color(0xFF1E2824); // Primary text in light mode
+  static const Color textDarkMuted =
+      Color(0xFF6C7D75); // Muted text in light mode
+  static const Color textDarkSecondary = textDarkMuted;
 
   // Card Surfaces
   static const Color cardDark = Color(0xFF142923);
@@ -39,7 +48,8 @@ abstract class AppColors {
   static const Color parchmentPaperDark = Color(0xFFF0EADB);
 
   // Borders & Outlines
-  static const Color borderSubtle = Color(0x1AFFFFFF); // rgba(255, 255, 255, 0.10)
+  static const Color borderSubtle =
+      Color(0x1AFFFFFF); // rgba(255, 255, 255, 0.10)
   static const Color borderGreen = Color(0xFF22443B);
   static const Color borderGold = Color(0xFFC8A25A);
 

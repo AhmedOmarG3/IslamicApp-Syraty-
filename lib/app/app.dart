@@ -7,6 +7,8 @@ import 'package:siraty/core/theme/theme.dart';
 import 'package:siraty/core/theme/theme_cubit.dart';
 import 'package:siraty/features/azkar/presentation/cubit/azkar_cubit.dart';
 import 'package:siraty/features/prayer/presentation/cubit/azan_cubit.dart';
+import 'package:siraty/features/quran/presentation/cubit/mushaf_settings_cubit.dart';
+import 'package:siraty/features/quran/presentation/cubit/quran_audio_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
 
 class SiratyApp extends StatelessWidget {
@@ -24,7 +26,9 @@ class SiratyApp extends StatelessWidget {
             BlocProvider(create: (_) => getIt<ThemeCubit>()),
             BlocProvider(create: (_) => getIt<QuranCubit>()..loadQuran()),
             BlocProvider(create: (_) => getIt<AzkarCubit>()..loadAzkar()),
-            BlocProvider(create: (_) => getIt<AzanCubit>()),
+            BlocProvider(create: (_) => getIt<AzanCubit>()..loadPrayerTimes()),
+            BlocProvider(create: (_) => getIt<QuranAudioCubit>()),
+            BlocProvider(create: (_) => getIt<MushafSettingsCubit>()),
           ],
           child: BlocBuilder<ThemeCubit, ThemeMode>(
             builder: (context, themeMode) {

@@ -9,4 +9,13 @@ abstract class AppAssets {
 
   static const String quranJson = 'assets/json/quran.json';
   static const String adhkarJson = 'assets/json/adhkar.json';
+  static const String tafsirJson = 'assets/json/tafsir.json';
+
+  // Realistic Card Backgrounds
+  static const String hisnCardBg = 'assets/images/hisn_card_bg.jpg';
+  static const String zakatCardBg = 'assets/images/zakat_card_bg.jpg';
+  static const String favoritesCardBg = 'assets/images/favorites_card_bg.jpg';
+  static const String morningCardBg = 'assets/images/morning_card_bg.jpg';
+  static const String eveningCardBg = 'assets/images/evening_card_bg.jpg';
+  static const String quranCardBg = 'assets/images/quran_card_bg.jpg';
 }

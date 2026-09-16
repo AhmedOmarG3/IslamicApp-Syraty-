@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:siraty/core/constants/assets.dart';
 
 class TafsirModel {
   final int surahNumber;
@@ -15,7 +17,7 @@ class TafsirModel {
     required this.ayahNumber,
     required this.ayahText,
     required this.tafsirText,
-    this.editionName = 'التفسير الميسر (مجمع الملك فهد)',
+    this.editionName = 'التفسير الميسر',
   });
 
   Map<String, dynamic> toJson() => {
@@ -32,19 +34,37 @@ class TafsirModel {
       ayahNumber: json['ayahNumber'] as int? ?? 1,
       ayahText: json['ayahText'] as String? ?? '',
       tafsirText: json['tafsirText'] as String? ?? '',
-      editionName: json['editionName'] as String? ?? 'التفسير الميسر (مجمع الملك فهد)',
+      editionName:
+          json['editionName'] as String? ?? 'التفسير الميسر',
     );
   }
 }
 
 class TafsirRepository {
   static final TafsirRepository instance = TafsirRepository._internal();
-  TafsirRepository._internal();
+  TafsirRepository._internal() {
+    _initOfflineTafsir();
+  }
 
   final Dio _dio = Dio();
   final Map<String, TafsirModel> _memoryCache = {};
+  Map<String, dynamic>? _offlineTafsirData;
+  bool _isLoadingOffline = false;
 
-  /// Fetch Tafsir for a specific Ayah (with local offline cache)
+  Future<void> _initOfflineTafsir() async {
+    if (_offlineTafsirData != null || _isLoadingOffline) return;
+    _isLoadingOffline = true;
+    try {
+      final jsonString = await rootBundle.loadString(AppAssets.tafsirJson);
+      _offlineTafsirData = jsonDecode(jsonString) as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint('Error loading offline tafsir.json: $e');
+    } finally {
+      _isLoadingOffline = false;
+    }
+  }
+
+  /// Fetch Tafsir for a specific Ayah (Instant Offline first, with API fallback)
   Future<TafsirModel?> getAyahTafsir({
     required int surahNum,
     required int ayahNum,
@@ -56,7 +76,27 @@ class TafsirRepository {
       return _memoryCache[cacheKey];
     }
 
-    // 2. Check persistent SharedPreferences cache (Offline storage)
+    // 2. Check complete bundled offline JSON database (100% Offline)
+    if (_offlineTafsirData == null) {
+      await _initOfflineTafsir();
+    }
+    if (_offlineTafsirData != null) {
+      final surahMap =
+          _offlineTafsirData![surahNum.toString()] as Map<String, dynamic>?;
+      final text = surahMap?[ayahNum.toString()] as String?;
+      if (text != null && text.trim().isNotEmpty) {
+        final model = TafsirModel(
+          surahNumber: surahNum,
+          ayahNumber: ayahNum,
+          ayahText: '',
+          tafsirText: text.trim(),
+        );
+        _memoryCache[cacheKey] = model;
+        return model;
+      }
+    }
+
+    // 3. Check persistent SharedPreferences cache
     final prefs = await SharedPreferences.getInstance();
     final cachedRaw = prefs.getString(cacheKey);
     if (cachedRaw != null) {
@@ -67,9 +107,10 @@ class TafsirRepository {
       } catch (_) {}
     }
 
-    // 3. Fetch from AlQuran Cloud API (Tafsir Al-Muyassar)
+    // 4. Fallback: Fetch from AlQuran Cloud API (if offline not found)
     try {
-      final url = 'https://api.alquran.cloud/v1/ayah/$surahNum:$ayahNum/ar.muyassar';
+      final url =
+          'https://api.alquran.cloud/v1/ayah/$surahNum:$ayahNum/ar.muyassar';
       final response = await _dio.get(
         url,
         options: Options(
@@ -88,7 +129,6 @@ class TafsirRepository {
           tafsirText: tafsirText,
         );
 
-        // Save in persistent offline cache
         await prefs.setString(cacheKey, jsonEncode(model.toJson()));
         _memoryCache[cacheKey] = model;
         return model;

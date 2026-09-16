@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 abstract class AppSpacing {
   static const double xxs = 2;
   static const double xs = 4;

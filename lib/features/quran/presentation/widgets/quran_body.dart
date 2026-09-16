@@ -23,9 +23,7 @@ class QuranBody extends StatelessWidget {
 
         return CustomRow(
           onTap: () {
-            context
-                .read<QuranCubit>()
-                .updateLastRead(surah.surahNumber - 1);
+            context.read<QuranCubit>().updateLastRead(surah.surahNumber - 1);
             context.push('/surah-details', extra: {
               'surah': surah,
               'surahName': name,

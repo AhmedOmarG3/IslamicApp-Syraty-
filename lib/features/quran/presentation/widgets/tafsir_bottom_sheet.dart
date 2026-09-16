@@ -117,7 +117,8 @@ class _TafsirBottomSheetState extends State<TafsirBottomSheet> {
                   ],
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
                   decoration: BoxDecoration(
                     color: AppColors.sageGreen.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10.r),
@@ -190,7 +191,8 @@ class _TafsirBottomSheetState extends State<TafsirBottomSheet> {
                         ),
                       ),
                       SizedBox(height: 40.h),
-                    ] else if (_tafsir != null && _tafsir!.tafsirText.isNotEmpty) ...[
+                    ] else if (_tafsir != null &&
+                        _tafsir!.tafsirText.isNotEmpty) ...[
                       Container(
                         padding: EdgeInsets.all(16.r),
                         decoration: BoxDecoration(
@@ -209,7 +211,7 @@ class _TafsirBottomSheetState extends State<TafsirBottomSheet> {
                                     size: 14.r, color: AppColors.accentGold),
                                 SizedBox(width: 6.w),
                                 Text(
-                                  'تفسير الآية (مجمع الملك فهد لطباعة المصحف الشريف):',
+                                  'التفسير الميسر:',
                                   style: TextStyle(
                                     fontFamily: 'Amiri',
                                     fontSize: 12.sp,

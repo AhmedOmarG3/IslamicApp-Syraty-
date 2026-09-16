@@ -17,9 +17,15 @@ class PremiumPrayerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AzanCubit, AzanState>(
       builder: (context, state) {
-        if (state is AzanLoadingState) return const _LoadingPrayerCard();
-        if (state is AzanLoadedState) return _LoadedPrayerCard(state: state);
-        if (state is AzanFailureState) return const _PrayerPrompt(isError: true);
+        if (state is AzanLoadingState) {
+          return const _LoadingPrayerCard();
+        }
+        if (state is AzanLoadedState) {
+          return _LoadedPrayerCard(state: state);
+        }
+        if (state is AzanFailureState) {
+          return const _PrayerPrompt(isError: true);
+        }
         return const _PrayerPrompt();
       },
     );
@@ -82,7 +88,8 @@ class _LoadedPrayerCard extends StatelessWidget {
               color: AppColors.white.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
             ),
-            child: const Icon(Icons.access_time_rounded, color: AppColors.white),
+            child:
+                const Icon(Icons.access_time_rounded, color: AppColors.white),
           ),
         ],
       ),

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">سيرتي</string>
+    <string name="widget_description">عرض آية اليوم المتجددة بتصميم إسلامي راقٍ</string>
+    <string name="prayer_widget_description">عرض مواعيد الصلوات والصلاة القادمة</string>
+</resources>

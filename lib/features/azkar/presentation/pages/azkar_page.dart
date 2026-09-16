@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:siraty/app/di/service_locator.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/core/widgets/app_skeleton.dart';
+import 'package:siraty/core/widgets/islamic_share_card_dialog.dart';
 import 'package:siraty/features/azkar/data/datasource/azkar_local_data_source.dart';
 import 'package:siraty/features/azkar/data/models/azkar_model.dart';
 import 'package:siraty/features/azkar/domain/entities/zekr_item_entity.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
 
 class AzkarPage extends StatefulWidget {
-  const AzkarPage({super.key});
+  final String? initialTab;
+  const AzkarPage({super.key, this.initialTab});
 
   @override
   State<AzkarPage> createState() => _AzkarPageState();
@@ -24,7 +25,7 @@ class _AzkarPageState extends State<AzkarPage> {
   List<AzkarModel> _allAzkar = [];
 
   // Selected daily tab
-  String _selectedTab = 'أذكار الصباح';
+  late String _selectedTab;
 
   final List<String> _tabs = [
     'أذكار الصباح',
@@ -40,6 +41,12 @@ class _AzkarPageState extends State<AzkarPage> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialTab != null && _tabs.contains(widget.initialTab)) {
+      _selectedTab = widget.initialTab!;
+    } else {
+      final hour = DateTime.now().hour;
+      _selectedTab = (hour >= 4 && hour < 16) ? 'أذكار الصباح' : 'أذكار المساء';
+    }
     _loadAzkar();
   }
 
@@ -81,7 +88,9 @@ class _AzkarPageState extends State<AzkarPage> {
 
       case 'بعد الصلاة':
         final cat = _allAzkar.firstWhere(
-          (c) => c.category.contains('بعد السلام') || c.category.contains('بعد الصلاة'),
+          (c) =>
+              c.category.contains('بعد السلام') ||
+              c.category.contains('بعد الصلاة'),
           orElse: () => _allAzkar.length > 26 ? _allAzkar[26] : _allAzkar.first,
         );
         return cat.zekrItems;
@@ -152,17 +161,23 @@ class _AzkarPageState extends State<AzkarPage> {
         duration: const Duration(seconds: 2),
         backgroundColor: AppColors.sageGreenDark,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       ),
     );
   }
 
-  void _shareText(String text) {
-    Share.share(
-      '$text\n\n[$_selectedTab · سِيرتي]',
-      subject: _selectedTab,
+  void _shareZekr(ZekrItemEntity item) {
+    IslamicShareCardDialog.show(
+      context,
+      type: ShareCardType.zikr,
+      contentText: item.text,
+      title: _selectedTab,
+      subtitle: item.count > 1 ? 'التكرار: ${QuranMetadata.toArabicDigits(item.count)} مرات' : null,
+      source: 'أذكار المسلم',
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -207,16 +222,25 @@ class _AzkarPageState extends State<AzkarPage> {
                         onTap: () => setState(() => _selectedTab = tab),
                         child: Container(
                           margin: EdgeInsets.only(left: 8.w),
-                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16.w, vertical: 8.h),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? (isDark ? AppColors.sageGreen : AppColors.navPillActiveLight)
-                                : (isDark ? AppColors.cardDark : AppColors.cardLight),
+                                ? (isDark
+                                    ? AppColors.sageGreen
+                                    : AppColors.navPillActiveLight)
+                                : (isDark
+                                    ? AppColors.cardDark
+                                    : AppColors.cardLight),
                             borderRadius: BorderRadius.circular(20.r),
                             border: Border.all(
                               color: isSelected
-                                  ? (isDark ? AppColors.sageGreen : AppColors.borderGold)
-                                  : (isDark ? AppColors.borderSubtle : AppColors.borderLight),
+                                  ? (isDark
+                                      ? AppColors.sageGreen
+                                      : AppColors.borderGold)
+                                  : (isDark
+                                      ? AppColors.borderSubtle
+                                      : AppColors.borderLight),
                             ),
                           ),
                           alignment: Alignment.center,
@@ -224,9 +248,15 @@ class _AzkarPageState extends State<AzkarPage> {
                             tab,
                             style: AppTextStyles.caption.copyWith(
                               color: isSelected
-                                  ? (isDark ? AppColors.bgDark : const Color(0xFF13362A))
-                                  : (isDark ? AppColors.textWhite : AppColors.textDarkPrimary),
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ? (isDark
+                                      ? AppColors.bgDark
+                                      : const Color(0xFF13362A))
+                                  : (isDark
+                                      ? AppColors.textWhite
+                                      : AppColors.textDarkPrimary),
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                               fontSize: 12.sp,
                             ),
                           ),
@@ -241,12 +271,15 @@ class _AzkarPageState extends State<AzkarPage> {
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.cardDark : AppColors.cardLight,
                       borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
-                        color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                        color: isDark
+                            ? AppColors.borderSubtle
+                            : AppColors.borderLight,
                       ),
                     ),
                     child: Column(
@@ -259,7 +292,9 @@ class _AzkarPageState extends State<AzkarPage> {
                               style: AppTextStyles.caption.copyWith(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.bold,
-                                color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                                color: isDark
+                                    ? AppColors.textWhite
+                                    : AppColors.textDarkPrimary,
                               ),
                             ),
                             Row(
@@ -275,11 +310,14 @@ class _AzkarPageState extends State<AzkarPage> {
                                 if (completedCount > 0) ...[
                                   SizedBox(width: 8.w),
                                   GestureDetector(
-                                    onTap: () => _resetAllCurrentTab(currentItems),
+                                    onTap: () =>
+                                        _resetAllCurrentTab(currentItems),
                                     child: Icon(
                                       Icons.restart_alt_rounded,
                                       size: 18.r,
-                                      color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                                      color: isDark
+                                          ? AppColors.textDimmed
+                                          : AppColors.textDarkMuted,
                                     ),
                                   ),
                                 ],
@@ -293,9 +331,13 @@ class _AzkarPageState extends State<AzkarPage> {
                           child: LinearProgressIndicator(
                             value: progressFraction,
                             minHeight: 6.h,
-                            backgroundColor: isDark ? AppColors.cardHighlight : const Color(0xFFEADBCE),
+                            backgroundColor: isDark
+                                ? AppColors.cardHighlight
+                                : const Color(0xFFEADBCE),
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              progressFraction == 1.0 ? AppColors.successGreen : AppColors.accentGold,
+                              progressFraction == 1.0
+                                  ? AppColors.successGreen
+                                  : AppColors.accentGold,
                             ),
                           ),
                         ),
@@ -308,7 +350,8 @@ class _AzkarPageState extends State<AzkarPage> {
                 // Azkar Cards List
                 Expanded(
                   child: ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
                     itemCount: currentItems.length,
                     itemBuilder: (context, index) {
                       final item = currentItems[index];
@@ -320,12 +363,15 @@ class _AzkarPageState extends State<AzkarPage> {
                         margin: EdgeInsets.only(bottom: 14.h),
                         padding: EdgeInsets.all(16.r),
                         decoration: BoxDecoration(
-                          color: isDark ? AppColors.cardDark : AppColors.cardLight,
+                          color:
+                              isDark ? AppColors.cardDark : AppColors.cardLight,
                           borderRadius: BorderRadius.circular(18.r),
                           border: Border.all(
                             color: isDone
                                 ? AppColors.successGreen
-                                : (isDark ? AppColors.borderSubtle : AppColors.borderLight),
+                                : (isDark
+                                    ? AppColors.borderSubtle
+                                    : AppColors.borderLight),
                             width: isDone ? 1.4 : 1,
                           ),
                         ),
@@ -341,7 +387,9 @@ class _AzkarPageState extends State<AzkarPage> {
                                   height: 32.r,
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
-                                    color: isDark ? AppColors.cardHighlight : AppColors.iconBgCircleLight,
+                                    color: isDark
+                                        ? AppColors.cardHighlight
+                                        : AppColors.iconBgCircleLight,
                                     shape: BoxShape.circle,
                                   ),
                                   child: Text(
@@ -349,21 +397,28 @@ class _AzkarPageState extends State<AzkarPage> {
                                     style: AppTextStyles.caption.copyWith(
                                       fontSize: 12.sp,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
+                                      color: isDark
+                                          ? AppColors.sageGreen
+                                          : AppColors.sageGreenDark,
                                     ),
                                   ),
                                 ),
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w, vertical: 4.h),
                                   decoration: BoxDecoration(
                                     color: isDone
-                                        ? AppColors.successGreen.withValues(alpha: 0.15)
-                                        : (isDark ? AppColors.cardHighlight : AppColors.iconBgCircleLight),
+                                        ? AppColors.successGreen
+                                            .withValues(alpha: 0.15)
+                                        : (isDark
+                                            ? AppColors.cardHighlight
+                                            : AppColors.iconBgCircleLight),
                                     borderRadius: BorderRadius.circular(12.r),
                                     border: Border.all(
                                       color: isDone
                                           ? AppColors.successGreen
-                                          : AppColors.accentGold.withValues(alpha: 0.5),
+                                          : AppColors.accentGold
+                                              .withValues(alpha: 0.5),
                                       width: 1,
                                     ),
                                   ),
@@ -372,7 +427,9 @@ class _AzkarPageState extends State<AzkarPage> {
                                         ? 'مُكتمَل'
                                         : '${QuranMetadata.toArabicDigits(targetCount)} ${targetCount > 1 ? "مرات" : "مرة"}',
                                     style: AppTextStyles.caption.copyWith(
-                                      color: isDone ? AppColors.successGreen : AppColors.accentGold,
+                                      color: isDone
+                                          ? AppColors.successGreen
+                                          : AppColors.accentGold,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 11.sp,
                                     ),
@@ -387,7 +444,9 @@ class _AzkarPageState extends State<AzkarPage> {
                               item.text,
                               style: AppTextStyles.bodyMedium.copyWith(
                                 fontSize: 16.sp,
-                                color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                                color: isDark
+                                    ? AppColors.textWhite
+                                    : AppColors.textDarkPrimary,
                                 height: 1.85,
                                 fontFamily: AppTextStyles.fontFamilyAmiri,
                               ),
@@ -402,25 +461,30 @@ class _AzkarPageState extends State<AzkarPage> {
                                   child: GestureDetector(
                                     onTap: () => _decrement(index, targetCount),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 150),
-                                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                                      duration:
+                                          const Duration(milliseconds: 150),
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 12.h),
                                       decoration: BoxDecoration(
                                         color: isDone
                                             ? AppColors.successGreen
                                             : (isDark
                                                 ? AppColors.sageGreenContainer
                                                 : const Color(0xFF13362A)),
-                                        borderRadius: BorderRadius.circular(14.r),
+                                        borderRadius:
+                                            BorderRadius.circular(14.r),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.black.withValues(alpha: 0.08),
+                                            color: Colors.black
+                                                .withValues(alpha: 0.08),
                                             blurRadius: 6,
                                             offset: const Offset(0, 2),
                                           ),
                                         ],
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
                                             isDone
@@ -429,19 +493,24 @@ class _AzkarPageState extends State<AzkarPage> {
                                             size: 20.r,
                                             color: isDone
                                                 ? Colors.white
-                                                : (isDark ? AppColors.sageGreen : AppColors.accentGold),
+                                                : (isDark
+                                                    ? AppColors.sageGreen
+                                                    : AppColors.accentGold),
                                           ),
                                           SizedBox(width: 8.w),
                                           Text(
                                             isDone
                                                 ? 'تم بحمد الله'
                                                 : 'المتبقي: ${QuranMetadata.toArabicDigits(remaining)}',
-                                            style: AppTextStyles.titleSmall.copyWith(
+                                            style: AppTextStyles.titleSmall
+                                                .copyWith(
                                               fontSize: 14.sp,
                                               fontWeight: FontWeight.bold,
                                               color: isDone
                                                   ? Colors.white
-                                                  : (isDark ? AppColors.sageGreen : Colors.white),
+                                                  : (isDark
+                                                      ? AppColors.sageGreen
+                                                      : Colors.white),
                                             ),
                                           ),
                                         ],
@@ -460,7 +529,8 @@ class _AzkarPageState extends State<AzkarPage> {
                                       size: 20.r,
                                       color: AppColors.accentGold,
                                     ),
-                                    onPressed: () => _resetZekr(index, targetCount),
+                                    onPressed: () =>
+                                        _resetZekr(index, targetCount),
                                   ),
 
                                 // Copy
@@ -469,7 +539,9 @@ class _AzkarPageState extends State<AzkarPage> {
                                   icon: Icon(
                                     Icons.copy_rounded,
                                     size: 18.r,
-                                    color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                                    color: isDark
+                                        ? AppColors.textDimmed
+                                        : AppColors.textDarkMuted,
                                   ),
                                   onPressed: () => _copyText(item.text),
                                 ),
@@ -480,9 +552,11 @@ class _AzkarPageState extends State<AzkarPage> {
                                   icon: Icon(
                                     Icons.share_outlined,
                                     size: 18.r,
-                                    color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                                    color: isDark
+                                        ? AppColors.textDimmed
+                                        : AppColors.textDarkMuted,
                                   ),
-                                  onPressed: () => _shareText(item.text),
+                                  onPressed: () => _shareZekr(item),
                                 ),
                               ],
                             ),

@@ -35,11 +35,13 @@ class CustomRow extends StatelessWidget {
                 StarNumberBadge(
                   number: QuranMetadata.toArabicDigits(number),
                   size: 40.r,
-                  outlineColor: isDark ? AppColors.borderGreen : AppColors.borderGold,
+                  outlineColor:
+                      isDark ? AppColors.borderGreen : AppColors.borderGold,
                   fillColor: isDark
                       ? AppColors.cardDarkElevated.withValues(alpha: 0.5)
                       : AppColors.iconBgCircleLight,
-                  textColor: isDark ? AppColors.textWhite : AppColors.accentGold,
+                  textColor:
+                      isDark ? AppColors.textWhite : AppColors.accentGold,
                 ),
                 SizedBox(width: 16.w),
 
@@ -53,7 +55,9 @@ class CustomRow extends StatelessWidget {
                         style: AppTextStyles.titleMedium.copyWith(
                           fontSize: 17.sp,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                          color: isDark
+                              ? AppColors.textWhite
+                              : AppColors.textDarkPrimary,
                         ),
                       ),
                       SizedBox(height: 3.h),
@@ -61,7 +65,9 @@ class CustomRow extends StatelessWidget {
                         '${QuranMetadata.toArabicDigits(numberOfVerses)} آية',
                         style: AppTextStyles.caption.copyWith(
                           fontSize: 12.sp,
-                          color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                          color: isDark
+                              ? AppColors.textMuted
+                              : AppColors.textDarkMuted,
                         ),
                       ),
                     ],
@@ -72,7 +78,8 @@ class CustomRow extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14.r,
-                  color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                  color:
+                      isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
                 ),
               ],
             ),

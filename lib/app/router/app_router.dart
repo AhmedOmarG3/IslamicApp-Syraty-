@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:siraty/app/presentation/pages/main_scaffold_page.dart';
+import 'package:siraty/core/widgets/route_error_page.dart';
 import 'package:siraty/features/azkar/data/models/azkar_model.dart';
 import 'package:siraty/features/azkar/presentation/pages/azkar_page.dart';
 import 'package:siraty/features/azkar/presentation/pages/hisn_al_muslim_page.dart';
 import 'package:siraty/features/azkar/presentation/pages/zekr_page.dart';
+import 'package:siraty/features/hadith/presentation/pages/hadith_page.dart';
 import 'package:siraty/features/home/presentation/pages/favorites_page.dart';
 import 'package:siraty/features/home/presentation/pages/home_page.dart';
 import 'package:siraty/features/home/presentation/pages/zakat_page.dart';
-import 'package:siraty/features/prayer/presentation/pages/hijri_page.dart';
+import 'package:siraty/features/prayer/presentation/pages/location_picker_page.dart';
 import 'package:siraty/features/prayer/presentation/pages/prayer_page.dart';
 import 'package:siraty/features/prayer/presentation/pages/qibla_page.dart';
 import 'package:siraty/features/quran/data/models/surah_model.dart';
-import 'package:siraty/features/quran/presentation/pages/khatma_page.dart';
 import 'package:siraty/features/quran/presentation/pages/quran_audio_player_page.dart';
 import 'package:siraty/features/quran/presentation/pages/quran_page.dart';
 import 'package:siraty/features/quran/presentation/pages/quran_search_page.dart';
 import 'package:siraty/features/quran/presentation/pages/surah_page.dart';
+import 'package:siraty/features/quran/presentation/pages/tajweed_page.dart';
 import 'package:siraty/features/settings/presentation/pages/settings_page.dart';
 import 'package:siraty/features/splash/presentation/pages/splash_page.dart';
 import 'package:siraty/features/tasbeeh/presentation/pages/tasbeeh_page.dart';
@@ -24,6 +26,8 @@ import 'package:siraty/features/tasbeeh/presentation/pages/tasbeeh_page.dart';
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 abstract class AppRouter {
+  static GlobalKey<NavigatorState> get rootNavigatorKey => _rootNavigatorKey;
+
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
@@ -89,12 +93,22 @@ abstract class AppRouter {
         path: '/surah-details',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final args = state.extra as Map<String, dynamic>;
+          // Deep links / cold starts can arrive without extra. Never cast
+          // blindly — fall back to the friendly error page instead of crashing.
+          final args = state.extra as Map<String, dynamic>?;
+          final surah = args?['surah'] as SurahModel?;
+          final surahName = args?['surahName'] as String?;
+          if (surah == null || surahName == null) {
+            return const RouteErrorPage(
+              message: 'تعذّر فتح السورة',
+            );
+          }
           return SurahPage(
-            surah: args['surah'] as SurahModel,
-            surahName: args['surahName'] as String,
-            initialPage: args['initialPage'] as int?,
-            targetAyah: args['targetAyah'] as int?,
+            surah: surah,
+            surahName: surahName,
+            initialPage: args?['initialPage'] as int?,
+            targetAyah: args?['targetAyah'] as int?,
+            autoOpenTafsir: args?['autoOpenTafsir'] as bool? ?? false,
           );
         },
       ),
@@ -119,13 +133,19 @@ abstract class AppRouter {
       GoRoute(
         path: '/azkar',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const AzkarPage(),
+        builder: (context, state) {
+          final initialTab = state.extra as String?;
+          return AzkarPage(initialTab: initialTab);
+        },
       ),
       GoRoute(
         path: '/zekr-details',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
-          final zekr = state.extra as AzkarModel;
+          final zekr = state.extra as AzkarModel?;
+          if (zekr == null) {
+            return const RouteErrorPage(message: 'تعذّر فتح الذكر');
+          }
           return ZekrPage(zekr: zekr);
         },
       ),
@@ -134,15 +154,16 @@ abstract class AppRouter {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const QiblaPage(),
       ),
-      GoRoute(
-        path: '/khatma',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const KhatmaPage(),
-      ),
+
       GoRoute(
         path: '/hisn-al-muslim',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const HisnAlMuslimPage(),
+      ),
+      GoRoute(
+        path: '/hadith',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const HadithPage(),
       ),
       GoRoute(
         path: '/zakat',
@@ -150,15 +171,22 @@ abstract class AppRouter {
         builder: (context, state) => const ZakatPage(),
       ),
       GoRoute(
+        path: '/tajweed',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TajweedPage(),
+      ),
+      GoRoute(
         path: '/favorites',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const FavoritesPage(),
       ),
       GoRoute(
-        path: '/hijri',
+        path: '/prayer-location',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const HijriPage(),
+        builder: (context, state) => const LocationPickerPage(),
       ),
     ],
+    errorBuilder: (context, state) =>
+        const RouteErrorPage(message: 'الصفحة غير موجودة'),
   );
 }

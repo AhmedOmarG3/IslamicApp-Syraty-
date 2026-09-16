@@ -54,7 +54,9 @@ class HomeStreakTracker extends StatelessWidget {
                     'يومًا متتابعًا',
                     style: AppTextStyles.titleMedium.copyWith(
                       fontSize: 14.sp,
-                      color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                      color: isDark
+                          ? AppColors.textWhite
+                          : AppColors.textDarkPrimary,
                     ),
                   ),
                 ],
@@ -82,9 +84,8 @@ class HomeStreakTracker extends StatelessWidget {
                     height: 34.r,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: d.isFull
-                          ? AppColors.sageGreen
-                          : Colors.transparent,
+                      color:
+                          d.isFull ? AppColors.sageGreen : Colors.transparent,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: d.isFull
@@ -109,7 +110,9 @@ class HomeStreakTracker extends StatelessWidget {
                     d.dayName,
                     style: AppTextStyles.caption.copyWith(
                       fontSize: 11.sp,
-                      color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                      color: isDark
+                          ? AppColors.textMuted
+                          : AppColors.textDarkMuted,
                     ),
                   ),
                 ],

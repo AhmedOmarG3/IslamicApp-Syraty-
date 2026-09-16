@@ -26,7 +26,8 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardPadding = padding ?? const EdgeInsets.all(AppDimensions.cardPadding);
+    final cardPadding =
+        padding ?? const EdgeInsets.all(AppDimensions.cardPadding);
     final cardMargin = margin ??
         const EdgeInsetsDirectional.symmetric(horizontal: 16, vertical: 8);
     final cardRadius = borderRadius ?? AppDimensions.radiusLg;

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base Emerald Islamic Gradient -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#183E31"
+                android:centerColor="#102A21"
+                android:endColor="#0A1C16"
+                android:angle="270" />
+            <corners android:radius="26dp" />
+        </shape>
+    </item>
+
+    <!-- Delicate Islamic Geometric Tessellation (Identical to Home Header Card) -->
+    <item>
+        <bitmap
+            android:src="@drawable/islamic_tile_pattern"
+            android:tileMode="repeat"
+            android:dither="true" />
+    </item>
+
+    <!-- Outer Hairline Gold Border -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="26dp" />
+            <stroke
+                android:width="1.2dp"
+                android:color="#35E5C78A" />
+        </shape>
+    </item>
+</layer-list>

@@ -45,8 +45,10 @@ class AppBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final activeColor = isDark ? AppColors.sageGreen : const Color(0xFF13362A);
-    final inactiveColor = isDark ? AppColors.textDimmed : const Color(0xFF7D8B84);
-    final activePillColor = isDark ? AppColors.sageGreenContainer : AppColors.navPillActiveLight;
+    final inactiveColor =
+        isDark ? AppColors.textDimmed : const Color(0xFF7D8B84);
+    final activePillColor =
+        isDark ? AppColors.sageGreenContainer : AppColors.navPillActiveLight;
 
     return Container(
       decoration: BoxDecoration(
@@ -78,9 +80,7 @@ class AppBottomNavBar extends StatelessWidget {
                     curve: Curves.easeInOut,
                     padding: EdgeInsets.symmetric(vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? activePillColor
-                          : Colors.transparent,
+                      color: isSelected ? activePillColor : Colors.transparent,
                       borderRadius: BorderRadius.circular(16.r),
                     ),
                     child: Column(

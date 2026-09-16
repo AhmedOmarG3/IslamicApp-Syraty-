@@ -49,17 +49,23 @@ class AppHeaderBar extends StatelessWidget implements PreferredSizeWidget {
                   width: 38.r,
                   height: 38.r,
                   decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+                    color: isDark
+                        ? AppColors.cardDarkElevated
+                        : AppColors.cardLight,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                      color: isDark
+                          ? AppColors.borderSubtle
+                          : AppColors.borderLight,
                       width: 1,
                     ),
                   ),
                   child: Icon(
                     Icons.arrow_back_ios_new_rounded,
                     size: 16.r,
-                    color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                    color: isDark
+                        ? AppColors.textWhite
+                        : AppColors.textDarkPrimary,
                   ),
                 ),
               )
@@ -80,7 +86,10 @@ class AppHeaderBar extends StatelessWidget implements PreferredSizeWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.titleLarge.copyWith(
-                        color: titleColor ?? (isDark ? AppColors.sageGreen : AppColors.sageGreenDark),
+                        color: titleColor ??
+                            (isDark
+                                ? AppColors.sageGreen
+                                : AppColors.sageGreenDark),
                         fontSize: 18.sp,
                       ),
                     ),
@@ -92,7 +101,9 @@ class AppHeaderBar extends StatelessWidget implements PreferredSizeWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.caption.copyWith(
-                          color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                          color: isDark
+                              ? AppColors.textMuted
+                              : AppColors.textDarkMuted,
                           fontSize: 11.sp,
                         ),
                       ),
@@ -103,10 +114,7 @@ class AppHeaderBar extends StatelessWidget implements PreferredSizeWidget {
             ),
 
             // Trailing widget or empty space for symmetry
-            if (trailing != null)
-              trailing!
-            else
-              SizedBox(width: 38.r),
+            if (trailing != null) trailing! else SizedBox(width: 38.r),
           ],
         ),
       ),

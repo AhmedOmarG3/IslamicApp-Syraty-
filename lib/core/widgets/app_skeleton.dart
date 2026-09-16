@@ -39,7 +39,8 @@ class _AppShimmerState extends State<AppShimmer>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? const Color(0xFF142923) : const Color(0xFFEDE5D8);
+    final baseColor =
+        isDark ? const Color(0xFF142923) : const Color(0xFFEDE5D8);
     final highlightColor =
         isDark ? const Color(0xFF22443A) : const Color(0xFFFFFDF9);
 
@@ -58,7 +59,8 @@ class _AppShimmerState extends State<AppShimmer>
                 baseColor,
               ],
               stops: const [0.1, 0.5, 0.9],
-              transform: _SlidingGradientTransform(slidePercent: _controller.value),
+              transform:
+                  _SlidingGradientTransform(slidePercent: _controller.value),
             ).createShader(bounds);
           },
           child: child,
@@ -76,7 +78,8 @@ class _SlidingGradientTransform extends GradientTransform {
 
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    return Matrix4.translationValues(bounds.width * (slidePercent * 2 - 1), 0.0, 0.0);
+    return Matrix4.translationValues(
+        bounds.width * (slidePercent * 2 - 1), 0.0, 0.0);
   }
 }
 
@@ -224,7 +227,17 @@ class SurahReadingSkeleton extends StatelessWidget {
 
               // Flowing Verse Lines (varied widths for authentic text look)
               ...List.generate(9, (i) {
-                final widths = [1.0, 0.95, 0.98, 0.88, 1.0, 0.92, 0.96, 0.84, 0.70];
+                final widths = [
+                  1.0,
+                  0.95,
+                  0.98,
+                  0.88,
+                  1.0,
+                  0.92,
+                  0.96,
+                  0.84,
+                  0.70
+                ];
                 return Padding(
                   padding: EdgeInsets.only(bottom: 16.h),
                   child: SkeletonBox(
@@ -271,7 +284,8 @@ class AudioPlayerSkeleton extends StatelessWidget {
                 color: isDark ? AppColors.cardDark : AppColors.cardLight,
                 borderRadius: BorderRadius.circular(22.r),
                 border: Border.all(
-                  color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                  color:
+                      isDark ? AppColors.borderSubtle : AppColors.borderLight,
                 ),
               ),
               child: Column(
@@ -361,8 +375,12 @@ class AzkarListSkeleton extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    SkeletonBox(width: 32.r, height: 32.r, shape: BoxShape.circle),
-                    SkeletonBox(width: 60.w, height: 20.h, borderRadius: BorderRadius.circular(12.r)),
+                    SkeletonBox(
+                        width: 32.r, height: 32.r, shape: BoxShape.circle),
+                    SkeletonBox(
+                        width: 60.w,
+                        height: 20.h,
+                        borderRadius: BorderRadius.circular(12.r)),
                   ],
                 ),
                 SizedBox(height: 14.h),

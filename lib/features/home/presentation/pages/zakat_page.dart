@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
@@ -17,15 +18,40 @@ class _ZakatPageState extends State<ZakatPage> {
   final TextEditingController _cashController = TextEditingController();
   final TextEditingController _goldController = TextEditingController();
   final TextEditingController _debtsController = TextEditingController();
-  final TextEditingController _goldGramPriceController = TextEditingController(text: '3500');
+  final TextEditingController _goldGramPriceController =
+      TextEditingController(text: '3500');
 
-  double get _goldGramPrice => double.tryParse(_goldGramPriceController.text) ?? 3500;
-  double get _goldNisabEgp => 85 * _goldGramPrice; // 85 grams of 21k/24k gold
+  double _parseInput(String text) {
+    if (text.isEmpty) return 0.0;
+    var sanitized = text
+        .replaceAll('٠', '0')
+        .replaceAll('١', '1')
+        .replaceAll('٢', '2')
+        .replaceAll('٣', '3')
+        .replaceAll('٤', '4')
+        .replaceAll('٥', '5')
+        .replaceAll('٦', '6')
+        .replaceAll('٧', '7')
+        .replaceAll('٨', '8')
+        .replaceAll('٩', '9')
+        .replaceAll('٫', '.')
+        .replaceAll(',', '')
+        .replaceAll('،', '')
+        .trim();
+    return double.tryParse(sanitized) ?? 0.0;
+  }
+
+  double get _goldGramPrice {
+    final price = _parseInput(_goldGramPriceController.text);
+    return price > 0 ? price : 3500;
+  }
+
+  double get _goldNisabEgp => 85 * _goldGramPrice; // 85 grams of gold
 
   double get _netZakatWealth {
-    final cash = double.tryParse(_cashController.text) ?? 0;
-    final gold = double.tryParse(_goldController.text) ?? 0;
-    final debts = double.tryParse(_debtsController.text) ?? 0;
+    final cash = _parseInput(_cashController.text);
+    final gold = _parseInput(_goldController.text);
+    final debts = _parseInput(_debtsController.text);
     final net = (cash + gold) - debts;
     return net > 0 ? net : 0;
   }
@@ -35,6 +61,15 @@ class _ZakatPageState extends State<ZakatPage> {
       return _netZakatWealth * 0.025;
     }
     return 0;
+  }
+
+  String _formatAmount(double amount) {
+    if (amount == 0) return '٠';
+    final isInt = amount == amount.roundToDouble();
+    final formatted = isInt
+        ? NumberFormat('#,###').format(amount.toInt())
+        : NumberFormat('#,###.##').format(amount);
+    return QuranMetadata.toArabicDigits(formatted);
   }
 
   @override
@@ -85,7 +120,9 @@ class _ZakatPageState extends State<ZakatPage> {
                     width: 48.r,
                     height: 48.r,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardHighlight : AppColors.iconBgCircleLight,
+                      color: isDark
+                          ? AppColors.cardHighlight
+                          : AppColors.iconBgCircleLight,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -98,17 +135,21 @@ class _ZakatPageState extends State<ZakatPage> {
                   Text(
                     'طهّر مالك',
                     style: AppTextStyles.titleMedium.copyWith(
-                      color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                      color: isDark
+                          ? AppColors.textWhite
+                          : AppColors.textDarkPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 19.sp,
                     ),
                   ),
                   SizedBox(height: 4.h),
                   Text(
-                    'احسب زكاة مالك بسهولة وفق نصاب الذهب الشرعي (٨٥ جراماً) — بالجنيه المصري',
+                    'احسب زكاة مالك بسهولة وفق نصاب الذهب الشرعي (٨٥ جراماً) — بنسبة ربع العشر (2.5%)',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.caption.copyWith(
-                      color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                      color: isDark
+                          ? AppColors.textMuted
+                          : AppColors.textDarkMuted,
                       fontSize: 12.sp,
                       height: 1.5,
                     ),
@@ -125,7 +166,8 @@ class _ZakatPageState extends State<ZakatPage> {
                 color: isDark ? AppColors.cardDark : AppColors.cardLight,
                 borderRadius: BorderRadius.circular(20.r),
                 border: Border.all(
-                  color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                  color:
+                      isDark ? AppColors.borderSubtle : AppColors.borderLight,
                   width: 1,
                 ),
               ),
@@ -140,7 +182,7 @@ class _ZakatPageState extends State<ZakatPage> {
                   SizedBox(height: 14.h),
                   _buildZakatField(
                     isDark: isDark,
-                    label: 'قيمة الذهب والفضة وعروض التجارة',
+                    label: 'قيمة الذهب والفضة وعروض التجارة (بالجنيه)',
                     controller: _goldController,
                     hint: '٠ ج.م',
                   ),
@@ -160,7 +202,9 @@ class _ZakatPageState extends State<ZakatPage> {
                         child: Text(
                           'سعر جرام الذهب عيار ٢١ الحالي:',
                           style: AppTextStyles.caption.copyWith(
-                            color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                            color: isDark
+                                ? AppColors.textMuted
+                                : AppColors.textDarkMuted,
                             fontSize: 12.sp,
                           ),
                         ),
@@ -181,11 +225,15 @@ class _ZakatPageState extends State<ZakatPage> {
                           decoration: InputDecoration(
                             contentPadding: EdgeInsets.zero,
                             filled: true,
-                            fillColor: isDark ? AppColors.cardDarkElevated : AppColors.cardLightElevated,
+                            fillColor: isDark
+                                ? AppColors.cardDarkElevated
+                                : AppColors.cardLightElevated,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10.r),
                               borderSide: BorderSide(
-                                color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                                color: isDark
+                                    ? AppColors.borderSubtle
+                                    : AppColors.borderLight,
                               ),
                             ),
                           ),
@@ -198,14 +246,19 @@ class _ZakatPageState extends State<ZakatPage> {
                   // Result Container
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDarkElevated : AppColors.cardLightElevated,
+                      color: isDark
+                          ? AppColors.cardDarkElevated
+                          : AppColors.cardLightElevated,
                       borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
                         color: reachesNisab
                             ? AppColors.borderGold
-                            : (isDark ? AppColors.borderSubtle : AppColors.borderLight),
+                            : (isDark
+                                ? AppColors.borderSubtle
+                                : AppColors.borderLight),
                         width: 1.2,
                       ),
                     ),
@@ -218,35 +271,70 @@ class _ZakatPageState extends State<ZakatPage> {
                             Text(
                               'صافي المال الزكوي',
                               style: AppTextStyles.caption.copyWith(
-                                color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                                color: isDark
+                                    ? AppColors.textMuted
+                                    : AppColors.textDarkMuted,
                                 fontSize: 13.sp,
                               ),
                             ),
                             Text(
-                              '${QuranMetadata.toArabicDigits(net.toInt())} ج.م',
+                              '${_formatAmount(net)} ج.م',
                               style: AppTextStyles.titleMedium.copyWith(
-                                color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                                color: isDark
+                                    ? AppColors.textWhite
+                                    : AppColors.textDarkPrimary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
                         Divider(
-                          color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                          color: isDark
+                              ? AppColors.borderSubtle
+                              : AppColors.borderLight,
                           height: 20.h,
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'مقدار الزكاة الواجبة (٢.٥٪)',
-                              style: AppTextStyles.titleSmall.copyWith(
-                                color: isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'الزكاة الواجبة ',
+                                  style: AppTextStyles.titleSmall.copyWith(
+                                    color: isDark
+                                        ? AppColors.sageGreen
+                                        : AppColors.sageGreenDark,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w, vertical: 2.h),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accentGold
+                                        .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(6.r),
+                                    border: Border.all(
+                                      color: AppColors.accentGold,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    '2.5%',
+                                    style: TextStyle(
+                                      fontFamily: 'sans-serif',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12.sp,
+                                      color: AppColors.accentGold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             Text(
-                              '${QuranMetadata.toArabicDigits(zakat.toInt())} ج.م',
+                              '${_formatAmount(zakat)} ج.م',
                               style: AppTextStyles.displayLarge.copyWith(
                                 color: AppColors.accentGold,
                                 fontSize: 22.sp,
@@ -260,22 +348,28 @@ class _ZakatPageState extends State<ZakatPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
-                              reachesNisab ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+                              reachesNisab
+                                  ? Icons.check_circle_rounded
+                                  : Icons.info_outline_rounded,
                               size: 16.r,
                               color: reachesNisab
                                   ? AppColors.successGreen
-                                  : (isDark ? AppColors.textDimmed : AppColors.textDarkMuted),
+                                  : (isDark
+                                      ? AppColors.textDimmed
+                                      : AppColors.textDarkMuted),
                             ),
                             SizedBox(width: 6.w),
                             Expanded(
                               child: Text(
                                 reachesNisab
-                                    ? 'بلغ النصاب الشرعي (${QuranMetadata.toArabicDigits(_goldNisabEgp.toInt())} ج.م) — تجب فيه الزكاة بعد حولان الحول الهجري كاملاً.'
-                                    : 'لم يبلغ النصاب بعد (${QuranMetadata.toArabicDigits(_goldNisabEgp.toInt())} ج.م) — لا تجب الزكاة حتى يبلغ النصاب ويحول عليه الحول.',
+                                    ? 'بلغ النصاب الشرعي (${_formatAmount(_goldNisabEgp)} ج.م) — تجب فيه الزكاة بنسبة 2.5% بعد حولان الحول الهجري كاملاً.'
+                                    : 'لم يبلغ النصاب بعد (${_formatAmount(_goldNisabEgp)} ج.م) — لا تجب الزكاة حتى يبلغ المال النصاب ويحول عليه الحول.',
                                 style: AppTextStyles.caption.copyWith(
                                   color: reachesNisab
                                       ? AppColors.successGreen
-                                      : (isDark ? AppColors.textDimmed : AppColors.textDarkMuted),
+                                      : (isDark
+                                          ? AppColors.textDimmed
+                                          : AppColors.textDarkMuted),
                                   fontSize: 11.5.sp,
                                   height: 1.4,
                                 ),
@@ -296,7 +390,7 @@ class _ZakatPageState extends State<ZakatPage> {
 
             // Footnote
             Text(
-              'النصاب محسوب على أساس ٨٥ جراماً من الذهب عيار ٢١ وفقاً لجمهور الفقهاء.',
+              'النصاب الشرعي محسوب على أساس ٨٥ جراماً من الذهب عيار ٢١ وفقاً لجمهور الفقهاء.',
               textAlign: TextAlign.center,
               style: AppTextStyles.caption.copyWith(
                 color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
@@ -341,9 +435,12 @@ class _ZakatPageState extends State<ZakatPage> {
             hintStyle: AppTextStyles.caption.copyWith(
               color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
             filled: true,
-            fillColor: isDark ? AppColors.cardDarkElevated : AppColors.cardLightElevated,
+            fillColor: isDark
+                ? AppColors.cardDarkElevated
+                : AppColors.cardLightElevated,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12.r),
               borderSide: BorderSide(
@@ -369,3 +466,4 @@ class _ZakatPageState extends State<ZakatPage> {
     );
   }
 }
+

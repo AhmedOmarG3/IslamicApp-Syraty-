@@ -137,4 +137,6 @@ class SurahModel extends SurahEntity {
   }
 
   List<String> getSurahName() => _surahNames;
+
+  static List<String> get surahNamesList => _surahNames;
 }

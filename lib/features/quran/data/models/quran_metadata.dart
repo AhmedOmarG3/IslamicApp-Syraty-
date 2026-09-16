@@ -3,41 +3,59 @@
 abstract class QuranMetadata {
   /// The 28 Madani Surahs. The remaining 86 are Makki.
   static const Set<int> _madaniSurahs = {
-    2, 3, 4, 5, 8, 9, 13, 22, 24, 33, 47, 48, 49,
-    55, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 76,
-    98, 99, 110
+    2,
+    3,
+    4,
+    5,
+    8,
+    9,
+    13,
+    22,
+    24,
+    33,
+    47,
+    48,
+    49,
+    55,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    76,
+    98,
+    99,
+    110
   };
 
   static bool isMakki(int surahNumber) => !_madaniSurahs.contains(surahNumber);
 
+  static int getSurahStartJuz(int surahNumber) {
+    if (surahNumber < 1 || surahNumber > 114) return 1;
+    const surahJuzMap = [
+      1, 1, 3, 4, 6, 7, 8, 9, 10, 11, // 1 - 10
+      11, 12, 13, 13, 14, 14, 15, 15, 16, 16, // 11 - 20
+      17, 17, 18, 18, 18, 19, 19, 20, 20, 21, // 21 - 30
+      21, 21, 21, 22, 22, 22, 23, 23, 23, 24, // 31 - 40
+      24, 25, 25, 25, 25, 26, 26, 26, 26, 26, // 41 - 50
+      26, 27, 27, 27, 27, 27, 27, 28, 28, 28, // 51 - 60
+      28, 28, 28, 28, 28, 28, 29, 29, 29, 29, // 61 - 70
+      29, 29, 29, 29, 29, 29, 29, // 71 - 77
+    ];
+    if (surahNumber <= 77) {
+      return surahJuzMap[surahNumber - 1];
+    }
+    return 30;
+  }
+
   static String getJuzName(int surahNumber) {
-    if (surahNumber == 1) return 'الجزء الأول';
-    if (surahNumber == 2) return 'الجزء الأول - الثالث';
-    if (surahNumber == 3) return 'الجزء الثالث - الرابع';
-    if (surahNumber == 4) return 'الجزء الرابع - السادس';
-    if (surahNumber == 5) return 'الجزء السادس - السابع';
-    if (surahNumber == 6) return 'الجزء السابع - الثامن';
-    if (surahNumber == 7) return 'الجزء الثامن - التاسع';
-    if (surahNumber == 8) return 'الجزء التاسع - العاشر';
-    if (surahNumber == 9) return 'الجزء العاشر - الحادي عشر';
-    if (surahNumber <= 11) return 'الجزء الحادي عشر - الثاني عشر';
-    if (surahNumber <= 14) return 'الجزء الثالث عشر';
-    if (surahNumber <= 16) return 'الجزء الرابع عشر';
-    if (surahNumber <= 18) return 'الجزء الخامس عشر - السادس عشر';
-    if (surahNumber <= 20) return 'الجزء السادس عشر';
-    if (surahNumber <= 22) return 'الجزء السابع عشر';
-    if (surahNumber <= 25) return 'الجزء الثامن عشر - التاسع عشر';
-    if (surahNumber <= 27) return 'الجزء التاسع عشر - العشرين';
-    if (surahNumber <= 29) return 'الجزء العشرين - الحادي والعشرين';
-    if (surahNumber <= 33) return 'الجزء الحادي والعشرين - الثاني والعشرين';
-    if (surahNumber <= 36) return 'الجزء الثاني والعشرين - الثالث والعشرين';
-    if (surahNumber <= 39) return 'الجزء الثالث والعشرين - الرابع والعشرين';
-    if (surahNumber <= 45) return 'الجزء الرابع والعشرين - السادس والعشرين';
-    if (surahNumber <= 51) return 'الجزء السادس والعشرين - السابع والعشرين';
-    if (surahNumber <= 57) return 'الجزء السابع والعشرين';
-    if (surahNumber <= 66) return 'الجزء الثامن والعشرين';
-    if (surahNumber <= 77) return 'الجزء التاسع والعشرين (تبارك)';
-    return 'الجزء الثلاثون (عمّ)';
+    final juzNum = getSurahStartJuz(surahNumber);
+    return getJuzNameFromNumber(juzNum);
   }
 
   static String getJuzNameFromNumber(int juzNumber) {
@@ -70,8 +88,8 @@ abstract class QuranMetadata {
       'الجزء السادس والعشرون',
       'الجزء السابع والعشرون',
       'الجزء الثامن والعشرون',
-      'الجزء التاسع والعشرون (تبارك)',
-      'الجزء الثلاثون (عمّ)',
+      'الجزء التاسع والعشرون',
+      'الجزء الثلاثون',
     ];
     if (juzNumber >= 1 && juzNumber <= 30) {
       return names[juzNumber - 1];
@@ -79,7 +97,7 @@ abstract class QuranMetadata {
     return 'الجزء $juzNumber';
   }
 
-  static String toArabicDigits(int number) {
+  static String toArabicDigits(Object number) {
     const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     return number.toString().split('').map((c) {
       final d = int.tryParse(c);

@@ -23,7 +23,8 @@ class StarNumberBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveOutline = outlineColor ?? AppColors.borderGreen;
     final effectiveText = textColor ?? AppColors.sageGreen;
-    final effectiveFill = fillColor ?? AppColors.cardDarkElevated.withValues(alpha: 0.5);
+    final effectiveFill =
+        fillColor ?? AppColors.cardDarkElevated.withValues(alpha: 0.5);
 
     return SizedBox(
       width: size,

@@ -81,7 +81,8 @@ class MadinahSurahHeader extends StatelessWidget {
               Expanded(
                 child: Center(
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
                     decoration: BoxDecoration(
                       color: borderColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(16.r),
@@ -151,17 +152,25 @@ class _SurahHeaderBannerPainter extends CustomPainter {
     // Corner decorative brackets
     const bracketSize = 8.0;
     // Top-left
-    canvas.drawLine(const Offset(4, 4), const Offset(4 + bracketSize, 4), paint);
-    canvas.drawLine(const Offset(4, 4), const Offset(4, 4 + bracketSize), paint);
+    canvas.drawLine(
+        const Offset(4, 4), const Offset(4 + bracketSize, 4), paint);
+    canvas.drawLine(
+        const Offset(4, 4), const Offset(4, 4 + bracketSize), paint);
     // Top-right
-    canvas.drawLine(Offset(size.width - 4, 4), Offset(size.width - 4 - bracketSize, 4), paint);
-    canvas.drawLine(Offset(size.width - 4, 4), Offset(size.width - 4, 4 + bracketSize), paint);
+    canvas.drawLine(Offset(size.width - 4, 4),
+        Offset(size.width - 4 - bracketSize, 4), paint);
+    canvas.drawLine(Offset(size.width - 4, 4),
+        Offset(size.width - 4, 4 + bracketSize), paint);
     // Bottom-left
-    canvas.drawLine(Offset(4, size.height - 4), Offset(4 + bracketSize, size.height - 4), paint);
-    canvas.drawLine(Offset(4, size.height - 4), Offset(4, size.height - 4 - bracketSize), paint);
+    canvas.drawLine(Offset(4, size.height - 4),
+        Offset(4 + bracketSize, size.height - 4), paint);
+    canvas.drawLine(Offset(4, size.height - 4),
+        Offset(4, size.height - 4 - bracketSize), paint);
     // Bottom-right
-    canvas.drawLine(Offset(size.width - 4, size.height - 4), Offset(size.width - 4 - bracketSize, size.height - 4), paint);
-    canvas.drawLine(Offset(size.width - 4, size.height - 4), Offset(size.width - 4, size.height - 4 - bracketSize), paint);
+    canvas.drawLine(Offset(size.width - 4, size.height - 4),
+        Offset(size.width - 4 - bracketSize, size.height - 4), paint);
+    canvas.drawLine(Offset(size.width - 4, size.height - 4),
+        Offset(size.width - 4, size.height - 4 - bracketSize), paint);
   }
 
   @override

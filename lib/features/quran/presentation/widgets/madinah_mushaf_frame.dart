@@ -43,7 +43,8 @@ class MadinahMushafFrame extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      constraints: minHeight != null ? BoxConstraints(minHeight: minHeight!) : null,
+      constraints:
+          minHeight != null ? BoxConstraints(minHeight: minHeight!) : null,
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(isFullScreen ? 10.r : 16.r),
@@ -73,7 +74,8 @@ class MadinahMushafFrame extends StatelessWidget {
                 children: [
                   // Top Header Band (Surah Name & Juz)
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 3.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 3.h),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -251,7 +253,8 @@ class _MadinahFramePainter extends CustomPainter {
     _drawCornerStar(canvas, starOffset, starOffset, borderColor);
     _drawCornerStar(canvas, size.width - starOffset, starOffset, borderColor);
     _drawCornerStar(canvas, starOffset, size.height - starOffset, borderColor);
-    _drawCornerStar(canvas, size.width - starOffset, size.height - starOffset, borderColor);
+    _drawCornerStar(
+        canvas, size.width - starOffset, size.height - starOffset, borderColor);
   }
 
   void _drawCornerStar(Canvas canvas, double cx, double cy, Color color) {

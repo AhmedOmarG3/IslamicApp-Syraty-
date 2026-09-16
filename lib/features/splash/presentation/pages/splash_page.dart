@@ -6,6 +6,8 @@ import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/core/widgets/islamic_pattern_card.dart';
 
+import 'package:siraty/features/home/domain/services/daily_ayah_widget_service.dart';
+
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -13,9 +15,11 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeIn;
+  Timer? _splashTimer;
 
   @override
   void initState() {
@@ -32,15 +36,23 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
 
     _fadeController.forward();
 
-    Timer(const Duration(seconds: 3), () {
+    // If app was cold-started from widget tap, expedite splash transition smoothly
+    final isWidgetLaunch = DailyAyahWidgetService.pendingWidgetLaunchUri != null;
+    final splashDuration = isWidgetLaunch ? 500 : 2200;
+
+    _splashTimer = Timer(Duration(milliseconds: splashDuration), () {
       if (mounted) {
         context.go('/home');
+        Future.delayed(const Duration(milliseconds: 200), () {
+          DailyAyahWidgetService.executePendingWidgetAction();
+        });
       }
     });
   }
 
   @override
   void dispose() {
+    _splashTimer?.cancel();
     _fadeController.dispose();
     super.dispose();
   }

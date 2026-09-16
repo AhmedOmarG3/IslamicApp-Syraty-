@@ -43,22 +43,9 @@ class _QuranPageState extends State<QuranPage> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppHeaderBar(
+      appBar: const AppHeaderBar(
         title: 'القرآن الكريم',
         showBackButton: false,
-        trailing: IconButton(
-          tooltip: 'البحث في كامل المصحف',
-          onPressed: () => context.push('/quran-search'),
-          icon: Container(
-            padding: EdgeInsets.all(8.r),
-            decoration: BoxDecoration(
-              color: AppColors.sageGreen.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.4)),
-            ),
-            child: Icon(Icons.manage_search_rounded, color: AppColors.accentGold, size: 20.r),
-          ),
-        ),
       ),
       body: Column(
         children: [
@@ -70,40 +57,53 @@ class _QuranPageState extends State<QuranPage> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+                      color: isDark
+                          ? AppColors.cardDarkElevated
+                          : AppColors.cardLight,
                       borderRadius: BorderRadius.circular(14.r),
                       border: Border.all(
-                        color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
+                        color: isDark
+                            ? AppColors.borderSubtle
+                            : AppColors.borderLight,
                       ),
                     ),
                     child: TextField(
                       controller: searchController,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                        color: isDark
+                            ? AppColors.textWhite
+                            : AppColors.textDarkPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                       decoration: InputDecoration(
                         hintText: 'ابحث عن سورة...',
                         hintStyle: AppTextStyles.caption.copyWith(
-                          color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                          color: isDark
+                              ? AppColors.textDimmed
+                              : AppColors.textDarkMuted,
                         ),
                         prefixIcon: Icon(
                           Icons.search_rounded,
-                          color: isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
+                          color: isDark
+                              ? AppColors.sageGreen
+                              : AppColors.sageGreenDark,
                           size: 20.r,
                         ),
                         suffixIcon: searchText.isNotEmpty
                             ? IconButton(
                                 icon: Icon(
                                   Icons.clear,
-                                  color: isDark ? AppColors.textMuted : AppColors.textDarkMuted,
+                                  color: isDark
+                                      ? AppColors.textMuted
+                                      : AppColors.textDarkMuted,
                                   size: 18.r,
                                 ),
                                 onPressed: () => searchController.clear(),
                               )
                             : null,
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16.w, vertical: 12.h),
                       ),
                     ),
                   ),
@@ -113,18 +113,24 @@ class _QuranPageState extends State<QuranPage> {
                   onTap: () => context.push('/quran-search'),
                   borderRadius: BorderRadius.circular(14.r),
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDarkElevated : AppColors.cardLight,
+                      color: isDark
+                          ? AppColors.cardDarkElevated
+                          : AppColors.cardLight,
                       borderRadius: BorderRadius.circular(14.r),
                       border: Border.all(
-                        color: isDark ? AppColors.borderGold : AppColors.accentGold,
+                        color: isDark
+                            ? AppColors.borderGold
+                            : AppColors.accentGold,
                       ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.auto_stories_rounded, color: AppColors.accentGold, size: 18.r),
+                        Icon(Icons.auto_stories_rounded,
+                            color: AppColors.accentGold, size: 18.r),
                         SizedBox(width: 6.w),
                         Text(
                           'بحث الآيات',
@@ -152,14 +158,16 @@ class _QuranPageState extends State<QuranPage> {
                   return Center(
                     child: Text(
                       state.message,
-                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.errorRed),
+                      style: AppTextStyles.bodyMedium
+                          .copyWith(color: AppColors.errorRed),
                     ),
                   );
                 } else if (state is QuranLoaded) {
                   final surahs = state.surahs;
                   final filteredSurahs = surahs.where((surah) {
-                    final name =
-                        surah.getSurahName()[surah.surahNumber - 1].toLowerCase();
+                    final name = surah
+                        .getSurahName()[surah.surahNumber - 1]
+                        .toLowerCase();
                     return name.contains(searchText);
                   }).toList();
 

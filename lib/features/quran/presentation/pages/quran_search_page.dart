@@ -77,11 +77,9 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
 
   /// Highlight search query occurrences within the verse text
   WidgetSpan _buildHighlightTextSpan(String text, String query) {
-    final normalizedVerse = QuranSearchService.normalizeArabic(text);
-    final normalizedQuery = QuranSearchService.normalizeArabic(query);
-    final matchIndex = normalizedVerse.indexOf(normalizedQuery);
+    final range = QuranSearchService.findMatchRange(text, query);
 
-    if (matchIndex == -1 || query.isEmpty) {
+    if (range == null || range.isCollapsed || query.trim().isEmpty) {
       return WidgetSpan(
         child: Text(
           text,
@@ -95,44 +93,44 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
       );
     }
 
+    final start = range.start.clamp(0, text.length);
+    final end = range.end.clamp(0, text.length);
+
     return WidgetSpan(
       child: Text.rich(
         TextSpan(
           children: [
-            TextSpan(
-              text: text.substring(0, matchIndex.clamp(0, text.length)),
-              style: TextStyle(
-                fontFamily: 'Amiri',
-                fontSize: 15.sp,
-                color: AppColors.textWhite,
-                height: 1.9,
+            if (start > 0)
+              TextSpan(
+                text: text.substring(0, start),
+                style: TextStyle(
+                  fontFamily: 'Amiri',
+                  fontSize: 15.sp,
+                  color: AppColors.textWhite,
+                  height: 1.9,
+                ),
               ),
-            ),
             TextSpan(
-              text: text.substring(
-                matchIndex,
-                (matchIndex + query.length).clamp(0, text.length),
-              ),
+              text: text.substring(start, end),
               style: TextStyle(
                 fontFamily: 'Amiri',
                 fontSize: 16.sp,
                 color: AppColors.accentGold,
                 fontWeight: FontWeight.bold,
-                backgroundColor: AppColors.accentGold.withValues(alpha: 0.25),
+                backgroundColor: AppColors.accentGold.withValues(alpha: 0.28),
                 height: 1.9,
               ),
             ),
-            TextSpan(
-              text: text.substring(
-                (matchIndex + query.length).clamp(0, text.length),
+            if (end < text.length)
+              TextSpan(
+                text: text.substring(end),
+                style: TextStyle(
+                  fontFamily: 'Amiri',
+                  fontSize: 15.sp,
+                  color: AppColors.textWhite,
+                  height: 1.9,
+                ),
               ),
-              style: TextStyle(
-                fontFamily: 'Amiri',
-                fontSize: 15.sp,
-                color: AppColors.textWhite,
-                height: 1.9,
-              ),
-            ),
           ],
         ),
       ),
@@ -180,7 +178,8 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
                   decoration: InputDecoration(
                     icon: Icon(Icons.search_rounded,
                         color: AppColors.accentGold, size: 22.r),
-                    hintText: 'ابحث عن آية أو كلمة (مثال: الكوثر، يسر، رحمة)...',
+                    hintText:
+                        'ابحث عن آية أو كلمة (مثال: الكوثر، يسر، رحمة)...',
                     hintStyle: TextStyle(
                       fontFamily: 'Amiri',
                       fontSize: 14.sp,
@@ -247,7 +246,8 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
                                       ? Icons.manage_search_rounded
                                       : Icons.search_off_rounded,
                                   size: 48.r,
-                                  color: AppColors.textMuted.withValues(alpha: 0.6),
+                                  color: AppColors.textMuted
+                                      .withValues(alpha: 0.6),
                                 ),
                                 SizedBox(height: 12.h),
                                 Text(
@@ -284,7 +284,8 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
                                       // Top metadata line
                                       Row(
@@ -301,7 +302,8 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
                                                   color: AppColors.sageGreen
                                                       .withValues(alpha: 0.15),
                                                   borderRadius:
-                                                      BorderRadius.circular(8.r),
+                                                      BorderRadius.circular(
+                                                          8.r),
                                                   border: Border.all(
                                                     color: AppColors.sageGreen,
                                                   ),

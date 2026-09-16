@@ -26,15 +26,15 @@ class HomeQuickActions extends StatelessWidget {
         ),
         _buildActionItem(
           context: context,
-          icon: Icons.check_circle_outline_rounded,
-          label: 'الختمة',
-          onTap: () => context.push('/khatma'),
+          icon: Icons.auto_stories_outlined,
+          label: 'الأذكار',
+          onTap: () => context.push('/azkar'),
         ),
         _buildActionItem(
           context: context,
-          icon: Icons.stars_outlined,
-          label: 'الأسماء',
-          onTap: () => context.push('/hisn-al-muslim'),
+          icon: Icons.menu_book_rounded,
+          label: 'الأحاديث',
+          onTap: () => context.push('/hadith'),
         ),
       ],
     );
@@ -77,7 +77,8 @@ class HomeQuickActions extends StatelessWidget {
                 style: AppTextStyles.caption.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+                  color:
+                      isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
                 ),
               ),
             ],

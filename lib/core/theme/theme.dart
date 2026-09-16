@@ -34,7 +34,8 @@ abstract class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         toolbarHeight: AppDimensions.appBarHeight,
-        titleTextStyle: AppTextStyles.appBarTitle.copyWith(color: AppColors.textDarkPrimary),
+        titleTextStyle: AppTextStyles.appBarTitle
+            .copyWith(color: AppColors.textDarkPrimary),
         iconTheme: const IconThemeData(color: AppColors.textDarkPrimary),
       ),
       cardTheme: CardThemeData(
@@ -83,7 +84,8 @@ abstract class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: true,
         toolbarHeight: AppDimensions.appBarHeight,
-        titleTextStyle: AppTextStyles.appBarTitle.copyWith(color: AppColors.textWhite),
+        titleTextStyle:
+            AppTextStyles.appBarTitle.copyWith(color: AppColors.textWhite),
         iconTheme: const IconThemeData(color: AppColors.textWhite),
       ),
       cardTheme: CardThemeData(
