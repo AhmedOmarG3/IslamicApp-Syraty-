@@ -13,35 +13,35 @@ class ZekrPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? AppColors.scaffoldBackground : AppColors.bgLight,
       appBar: AppBar(
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Text(
           zekr.category,
-          style: const TextStyle(
-            color: AppColors.primaryGreen,
-            fontSize: 25,
+          style: TextStyle(
+            color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: zekr.zekrItems.length,
-              itemBuilder: (context, index) {
-                final item = zekr.zekrItems[index];
-                return CustomZekrRow(
-                  count: item.count,
-                  number: index + 1,
-                  name: item.text,
-                  onTap: () {},
-                );
-              },
-            ),
-          ),
-        ],
+      body: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: zekr.zekrItems.length,
+        itemBuilder: (context, index) {
+          final item = zekr.zekrItems[index];
+          return CustomZekrRow(
+            count: item.count,
+            number: index + 1,
+            name: item.text,
+            onTap: () {},
+          );
+        },
       ),
     );
   }

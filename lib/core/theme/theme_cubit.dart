@@ -16,7 +16,7 @@ class ThemeCubit extends Cubit<ThemeMode> {
     } else if (raw == 'dark') {
       return ThemeMode.dark;
     }
-    return ThemeMode.dark; // Default to the iconic Dark theme
+    return ThemeMode.light; // Default to Light theme
   }
 
   bool get isDarkMode => state == ThemeMode.dark;

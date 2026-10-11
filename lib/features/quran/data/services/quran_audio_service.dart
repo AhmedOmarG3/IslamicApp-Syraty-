@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:siraty/features/quran/data/services/quran_download_service.dart';
 
 class QuranReciter {
   final String id;
@@ -30,7 +32,12 @@ class QuranReciter {
 /// Lives in the data layer; presentation consumes it through
 /// [QuranAudioCubit] and getIt — never directly.
 class QuranAudioService {
-  QuranAudioService();
+  final QuranDownloadService? _downloadService;
+
+  QuranAudioService({QuranDownloadService? downloadService})
+      : _downloadService = downloadService {
+    _initListeners();
+  }
 
   late final AudioPlayer _player = AudioPlayer();
   AudioPlayer get player => _player;
@@ -40,6 +47,31 @@ class QuranAudioService {
 
   bool _isPlaylistMode = false;
   bool get isPlaylistMode => _isPlaylistMode;
+
+  void _initListeners() {
+    _currentIndexSubscription = _player.currentIndexStream.listen((index) {
+      if (_isPlaylistMode && index != null && currentVersesCount != null && index < currentVersesCount!) {
+        final ayah = index + 1;
+        activeAyahNotifier.value = ayah;
+        if (currentSurahNumber != null) {
+          currentPlayingKey.value = '$currentSurahNumber:$ayah';
+        }
+      }
+    }, onError: (Object e) {
+      debugPrint('QuranAudioService currentIndexStream error: $e');
+    });
+
+    _playerStateSubscription = _player.playerStateStream.listen((state) {
+      isPlayingNotifier.value = state.playing;
+      if (state.processingState == ProcessingState.completed) {
+        isPlayingNotifier.value = false;
+        currentPlayingKey.value = null;
+      }
+    }, onError: (Object e) {
+      debugPrint('QuranAudioService playerStateStream error: $e');
+      isPlayingNotifier.value = false;
+    });
+  }
 
   static const List<QuranReciter> availableReciters = [
     QuranReciter(
@@ -168,6 +200,14 @@ class QuranAudioService {
     _selectedReciter = reciter;
   }
 
+  /// Find a reciter by id (e.g. "ar.alafasy")
+  static QuranReciter? getReciterById(String reciterId) {
+    for (final r in availableReciters) {
+      if (r.id == reciterId) return r;
+    }
+    return null;
+  }
+
   /// Construct EveryAyah URL for a specific verse
   static String getVerseAudioUrl(int surahNum, int ayahNum, String reciterId) {
     final sStr = surahNum.toString().padLeft(3, '0');
@@ -194,46 +234,40 @@ class QuranAudioService {
     currentVersesCount = versesCount;
     _isPlaylistMode = true;
 
-    // Cancel old stream listeners so they don't leak or overwrite
-    await _currentIndexSubscription?.cancel();
-    _currentIndexSubscription = null;
-    await _playerStateSubscription?.cancel();
-    _playerStateSubscription = null;
-
     final targetIndex = (initialAyah - 1).clamp(0, versesCount - 1);
     activeAyahNotifier.value = targetIndex + 1;
     currentPlayingKey.value = '$surahNum:${targetIndex + 1}';
 
+    final String sName = surahName ?? currentSurahName ?? 'سورة رقم $surahNum';
     final sources = List<AudioSource>.generate(versesCount, (index) {
       final ayahNum = index + 1;
+      final localPath = _downloadService?.getLocalAyahFilePath(rec.id, surahNum, ayahNum);
+      final mediaItem = MediaItem(
+        id: '$surahNum:$ayahNum',
+        album: sName,
+        title: '$sName - آية $ayahNum',
+        artist: rec.displayName,
+        artUri: Uri.parse('android.resource://com.ahmed.siraty/drawable/app_logo'),
+      );
+      if (localPath != null) {
+        return AudioSource.file(localPath, tag: mediaItem);
+      }
       final url = getVerseAudioUrl(surahNum, ayahNum, rec.id);
-      return AudioSource.uri(Uri.parse(url), tag: ayahNum);
+      return AudioSource.uri(
+        Uri.parse(url),
+        tag: mediaItem,
+      );
     });
 
     try {
       isPlayingNotifier.value = true;
-      await _player.stop();
       await _player.setAudioSources(
         sources,
         initialIndex: targetIndex,
         initialPosition: Duration.zero,
+        preload: false,
       );
-      _player.play();
-
-      _currentIndexSubscription = _player.currentIndexStream.listen((index) {
-        if (_isPlaylistMode && index != null && index < versesCount) {
-          activeAyahNotifier.value = index + 1;
-          currentPlayingKey.value = '$surahNum:${index + 1}';
-        }
-      });
-
-      _playerStateSubscription = _player.playerStateStream.listen((state) {
-        isPlayingNotifier.value = state.playing;
-        if (state.processingState == ProcessingState.completed) {
-          isPlayingNotifier.value = false;
-          currentPlayingKey.value = null;
-        }
-      });
+      await _player.play();
     } catch (e) {
       isPlayingNotifier.value = false;
       currentPlayingKey.value = null;
@@ -256,45 +290,42 @@ class QuranAudioService {
     if (versesCount != null) currentVersesCount = versesCount;
     _isPlaylistMode = false;
 
-    // Cancel previous listeners to prevent old playlist listeners from resetting to index 0 (Ayah 1)
-    await _currentIndexSubscription?.cancel();
-    _currentIndexSubscription = null;
-    await _playerStateSubscription?.cancel();
-    _playerStateSubscription = null;
-
     activeAyahNotifier.value = ayahNum;
+    final String sName = surahName ?? currentSurahName ?? 'سورة رقم $surahNum';
+    final localPath = _downloadService?.getLocalAyahFilePath(rec.id, surahNum, ayahNum);
     final url = getVerseAudioUrl(surahNum, ayahNum, rec.id);
     final key = '$surahNum:$ayahNum';
+    final mediaItem = MediaItem(
+      id: key,
+      album: sName,
+      title: '$sName - آية $ayahNum',
+      artist: rec.displayName,
+      artUri: Uri.parse('android.resource://com.ahmed.siraty/drawable/app_logo'),
+    );
+    final AudioSource source = localPath != null
+        ? AudioSource.file(localPath, tag: mediaItem)
+        : AudioSource.uri(
+            Uri.parse(url),
+            tag: mediaItem,
+          );
 
     try {
       currentPlayingKey.value = key;
       isPlayingNotifier.value = true;
-      await _player.stop();
-      await _player.setUrl(url);
-      _player.play();
-
-      _playerStateSubscription = _player.playerStateStream.listen((state) {
-        isPlayingNotifier.value = state.playing;
-        if (state.processingState == ProcessingState.completed) {
-          currentPlayingKey.value = null;
-          isPlayingNotifier.value = false;
-          // Retain activeAyahNotifier so UI preserves the active Ayah display
-        }
-      });
+      await _player.setAudioSource(source, preload: false);
+      await _player.play();
     } catch (e) {
       isPlayingNotifier.value = false;
       currentPlayingKey.value = null;
-      debugPrint('Error playing verse audio: $e');
+      debugPrint('Error playing single ayah audio: $e');
     }
   }
 
   /// Stop current playback
   Future<void> stop() async {
-    await _currentIndexSubscription?.cancel();
-    _currentIndexSubscription = null;
-    await _playerStateSubscription?.cancel();
-    _playerStateSubscription = null;
-    await _player.stop();
+    try {
+      await _player.stop();
+    } catch (_) {}
     isPlayingNotifier.value = false;
     currentPlayingKey.value = null;
     activeAyahNotifier.value = null;
@@ -310,8 +341,38 @@ class QuranAudioService {
     isPlayingNotifier.value = false;
   }
 
-  /// Resume playback
+  /// Resume playback with self-healing recovery.
+  /// If the underlying player was stopped, idle, or lost its source,
+  /// it automatically re-initializes and starts playback at the current Ayah
+  /// instead of staying stuck in an unplayable triangle state.
   Future<void> resume() async {
+    final isPlayerIdle = _player.processingState == ProcessingState.idle ||
+        _player.audioSource == null;
+
+    if (isPlayerIdle) {
+      if (currentSurahNumber != null) {
+        if (_isPlaylistMode && currentVersesCount != null && currentVersesCount! > 0) {
+          await playSurah(
+            surahNum: currentSurahNumber!,
+            versesCount: currentVersesCount!,
+            surahName: currentSurahName,
+            reciter: _selectedReciter,
+            initialAyah: activeAyahNotifier.value ?? 1,
+          );
+          return;
+        } else if (activeAyahNotifier.value != null) {
+          await playAyah(
+            surahNum: currentSurahNumber!,
+            ayahNum: activeAyahNotifier.value!,
+            surahName: currentSurahName,
+            versesCount: currentVersesCount,
+            reciter: _selectedReciter,
+          );
+          return;
+        }
+      }
+    }
+
     // After natural completion, play() would set playing=true while the
     // position sits at the end — restart from the beginning instead.
     if (_player.processingState == ProcessingState.completed) {
@@ -321,8 +382,32 @@ class QuranAudioService {
         await _player.seek(Duration.zero);
       }
     }
-    _player.play();
-    isPlayingNotifier.value = true;
+
+    try {
+      await _player.play();
+      isPlayingNotifier.value = true;
+    } catch (e) {
+      debugPrint('Error resuming playback, performing self-heal re-initialization: $e');
+      if (currentSurahNumber != null) {
+        if (_isPlaylistMode && currentVersesCount != null && currentVersesCount! > 0) {
+          await playSurah(
+            surahNum: currentSurahNumber!,
+            versesCount: currentVersesCount!,
+            surahName: currentSurahName,
+            reciter: _selectedReciter,
+            initialAyah: activeAyahNotifier.value ?? 1,
+          );
+        } else if (activeAyahNotifier.value != null) {
+          await playAyah(
+            surahNum: currentSurahNumber!,
+            ayahNum: activeAyahNotifier.value!,
+            surahName: currentSurahName,
+            versesCount: currentVersesCount,
+            reciter: _selectedReciter,
+          );
+        }
+      }
+    }
   }
 
   /// Seek forward 10 seconds
@@ -343,6 +428,17 @@ class QuranAudioService {
   Future<void> nextAyah() async {
     if (_player.hasNext) {
       await _player.seekToNext();
+    } else if (currentSurahNumber != null && currentVersesCount != null) {
+      final current = activeAyahNotifier.value ?? 1;
+      if (current < currentVersesCount!) {
+        await playSurah(
+          surahNum: currentSurahNumber!,
+          versesCount: currentVersesCount!,
+          surahName: currentSurahName,
+          reciter: _selectedReciter,
+          initialAyah: current + 1,
+        );
+      }
     }
   }
 
@@ -350,6 +446,17 @@ class QuranAudioService {
   Future<void> previousAyah() async {
     if (_player.hasPrevious) {
       await _player.seekToPrevious();
+    } else if (currentSurahNumber != null && currentVersesCount != null) {
+      final current = activeAyahNotifier.value ?? 1;
+      if (current > 1) {
+        await playSurah(
+          surahNum: currentSurahNumber!,
+          versesCount: currentVersesCount!,
+          surahName: currentSurahName,
+          reciter: _selectedReciter,
+          initialAyah: current - 1,
+        );
+      }
     }
   }
 

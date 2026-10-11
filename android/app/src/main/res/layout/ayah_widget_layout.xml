@@ -1,28 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_container"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@drawable/widget_background"
-    android:paddingLeft="11dp"
-    android:paddingRight="11dp"
-    android:paddingTop="10dp"
-    android:paddingBottom="9dp"
-    android:gravity="center"
-    android:layoutDirection="rtl">
+    android:layout_height="match_parent">
 
-    <!-- Inner Decorative Islamic Frame with safe inner padding so text doesn't touch ornaments -->
+    <!-- Rendered Flutter Card Image (Pixel-perfect authentic Quran font) -->
+    <ImageView
+        android:id="@+id/widget_rendered_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:visibility="gone" />
+
+    <!-- Fallback Native Layout -->
     <LinearLayout
+        android:id="@+id/widget_fallback_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@drawable/widget_inner_frame"
+        android:background="@drawable/widget_background"
         android:paddingLeft="14dp"
         android:paddingRight="14dp"
-        android:paddingTop="9dp"
-        android:paddingBottom="8dp"
-        android:gravity="center">
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:layoutDirection="rtl">
 
         <!-- Header Row: Title & Surah Reference Pill -->
         <LinearLayout
@@ -37,7 +38,8 @@
                 android:layout_height="wrap_content"
                 android:text="✦ آية اليوم"
                 android:textColor="#F3D295"
-                android:textSize="12.5sp"
+                android:fontFamily="@font/amiri"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <ImageView
@@ -51,72 +53,41 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/widget_pill_bg"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp"
-                android:text="سورة البقرة · ٢٥٥"
+                android:paddingLeft="9dp"
+                android:paddingRight="9dp"
+                android:paddingTop="2.5dp"
+                android:paddingBottom="2.5dp"
+                android:text="سورة طه · آية ١١٤"
                 android:textColor="#FFD98E"
-                android:textSize="11sp"
+                android:fontFamily="@font/amiri"
+                android:textSize="10.5sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Subtle Rosette Divider (ImageView used for RemoteViews compatibility) -->
-        <LinearLayout
+        <!-- Subtle Divider -->
+        <ImageView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="4dp">
+            android:layout_height="0.8dp"
+            android:layout_marginTop="7dp"
+            android:layout_marginBottom="6dp"
+            android:background="#15FFFFFF" />
 
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="0.8dp"
-                android:layout_weight="1"
-                android:background="#20FFFFFF" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text=" ۞ "
-                android:textColor="#66E5C78A"
-                android:textSize="8sp" />
-
-            <ImageView
-                android:layout_width="0dp"
-                android:layout_height="0.8dp"
-                android:layout_weight="1"
-                android:background="#20FFFFFF" />
-        </LinearLayout>
-
-        <!-- Center: The Daily Ayah Text (Generous padding, high readability, safe breathing room) -->
+        <!-- Center: The Daily Ayah Text -->
         <TextView
             android:id="@+id/widget_verse_text"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
             android:text="﴿ وَقُل رَّبِّ زِدْنِي عِلْمًا ﴾"
-            android:textColor="#FFFFFF"
-            android:textSize="16.5sp"
-            android:lineSpacingExtra="6.5dp"
+            android:textColor="#FAF7EE"
+            android:fontFamily="@font/amiri_quran"
+            android:textSize="16sp"
+            android:lineSpacingMultiplier="1.25"
             android:ellipsize="end"
-            android:maxLines="4"
-            android:textStyle="bold" />
+            android:maxLines="20" />
 
-        <!-- Subtle Footer: App Branding -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="سِيرتي"
-            android:textColor="#45FFFFFF"
-            android:textSize="10sp" />
     </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>

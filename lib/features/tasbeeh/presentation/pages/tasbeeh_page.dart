@@ -3,9 +3,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:siraty/app/di/service_locator.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
+import 'package:siraty/core/services/haptic_service.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/core/widgets/islamic_pattern_card.dart';
 
@@ -21,9 +22,6 @@ class _TasbeehPageState extends State<TasbeehPage>
   int _counter = 0;
   int _cycles = 0;
   int _selectedZikrIndex = 0;
-  bool _soundEnabled = true;
-
-  late final AudioPlayer _clickPlayer;
 
   // Animation controller for sliding and glowing beads
   late final AnimationController _beadController;
@@ -45,10 +43,6 @@ class _TasbeehPageState extends State<TasbeehPage>
   @override
   void initState() {
     super.initState();
-    _clickPlayer = AudioPlayer();
-    _clickPlayer.setAsset('assets/audio/tasbeeh_click.wav');
-    _clickPlayer.setVolume(0.7);
-
     _beadController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 320),
@@ -71,28 +65,14 @@ class _TasbeehPageState extends State<TasbeehPage>
 
   @override
   void dispose() {
-    _clickPlayer.dispose();
     _beadController.dispose();
     _buttonPressController.dispose();
     super.dispose();
   }
 
-  void _playClickSound() {
-    try {
-      SystemSound.play(SystemSoundType.click);
-      _clickPlayer.seek(Duration.zero);
-      _clickPlayer.play();
-    } catch (_) {}
-  }
-
   void _onIncrement() {
-    // Sound feedback
-    if (_soundEnabled) {
-      _playClickSound();
-    }
-
     // Haptic feedback
-    HapticFeedback.lightImpact();
+    getIt<HapticService>().triggerTap();
 
     // Trigger button spring animation
     _buttonPressController.forward().then((_) {
@@ -117,7 +97,7 @@ class _TasbeehPageState extends State<TasbeehPage>
       if (_counter >= 33) {
         _counter = 0;
         _cycles++;
-        HapticFeedback.heavyImpact();
+        getIt<HapticService>().triggerCompletion();
       }
     });
   }
@@ -132,7 +112,7 @@ class _TasbeehPageState extends State<TasbeehPage>
 
   void _reset() {
     if (_counter == 0) return;
-    HapticFeedback.mediumImpact();
+    getIt<HapticService>().triggerTap();
     setState(() {
       _counter = 0;
       _resetBeadOffset();
@@ -153,7 +133,7 @@ class _TasbeehPageState extends State<TasbeehPage>
 
   void _resetAll() {
     if (_counter == 0 && _cycles == 0) return;
-    HapticFeedback.heavyImpact();
+    getIt<HapticService>().triggerCompletion();
     setState(() {
       _counter = 0;
       _cycles = 0;
@@ -180,44 +160,9 @@ class _TasbeehPageState extends State<TasbeehPage>
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppHeaderBar(
+      appBar: const AppHeaderBar(
         title: 'السبحة',
         showBackButton: false,
-        trailing: GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _soundEnabled = !_soundEnabled);
-          },
-          child: Container(
-            width: 38.r,
-            height: 38.r,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.cardDarkElevated
-                  : AppColors.cardLight,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: _soundEnabled
-                    ? AppColors.accentGold
-                    : (isDark
-                        ? AppColors.borderSubtle
-                        : AppColors.borderLight),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              _soundEnabled
-                  ? Icons.volume_up_rounded
-                  : Icons.volume_off_rounded,
-              size: 18.r,
-              color: _soundEnabled
-                  ? AppColors.accentGold
-                  : (isDark
-                      ? AppColors.textDimmed
-                      : AppColors.textDarkMuted),
-            ),
-          ),
-        ),
       ),
       body: Stack(
         children: [

@@ -113,7 +113,7 @@
             android:paddingRight="10dp"
             android:paddingTop="3.5dp"
             android:paddingBottom="3.5dp"
-            android:text="⏳ حان وقت الصلاة"
+            android:text="حان وقت الصلاة"
             android:textColor="#FFDF9A"
             android:textSize="11.5sp"
             android:textStyle="bold"

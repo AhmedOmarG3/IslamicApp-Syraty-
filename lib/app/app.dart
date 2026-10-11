@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/app/di/service_locator.dart';
 import 'package:siraty/app/router/app_router.dart';
@@ -10,9 +11,36 @@ import 'package:siraty/features/prayer/presentation/cubit/azan_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/mushaf_settings_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_audio_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
+import 'package:siraty/features/quran/presentation/cubit/quran_download_cubit.dart';
 
-class SiratyApp extends StatelessWidget {
+import 'package:flutter/services.dart';
+
+class SiratyApp extends StatefulWidget {
   const SiratyApp({super.key});
+
+  @override
+  State<SiratyApp> createState() => _SiratyAppState();
+}
+
+class _SiratyAppState extends State<SiratyApp> {
+  static const _appChannel = MethodChannel('siraty/app_channel');
+
+  @override
+  void initState() {
+    super.initState();
+    _appChannel.setMethodCallHandler((call) async {
+      if (call.method == 'onNavigateRoute') {
+        final route = call.arguments as String?;
+        if (route != null && route.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            try {
+              AppRouter.router.push(route);
+            } catch (_) {}
+          });
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +57,7 @@ class SiratyApp extends StatelessWidget {
             BlocProvider(create: (_) => getIt<AzanCubit>()..loadPrayerTimes()),
             BlocProvider(create: (_) => getIt<QuranAudioCubit>()),
             BlocProvider(create: (_) => getIt<MushafSettingsCubit>()),
+            BlocProvider(create: (_) => getIt<QuranDownloadCubit>()),
           ],
           child: BlocBuilder<ThemeCubit, ThemeMode>(
             builder: (context, themeMode) {
@@ -38,6 +67,14 @@ class SiratyApp extends StatelessWidget {
                 darkTheme: AppTheme.darkTheme,
                 themeMode: themeMode,
                 locale: const Locale('ar'),
+                supportedLocales: const [
+                  Locale('ar'),
+                ],
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
                 builder: (context, child) {
                   final mediaQuery = MediaQuery.of(context);
                   return MediaQuery(

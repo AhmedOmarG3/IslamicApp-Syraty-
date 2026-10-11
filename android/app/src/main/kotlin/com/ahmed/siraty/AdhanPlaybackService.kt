@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -50,6 +51,12 @@ class AdhanPlaybackService : Service() {
             ACTION_STOP -> {
                 Log.d("AdhanService", "Stop action received")
                 stopPlayback()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                } else {
+                    @Suppress("DEPRECATION")
+                    stopForeground(true)
+                }
                 stopSelf()
             }
             ACTION_PLAY -> {
@@ -241,10 +248,11 @@ class AdhanPlaybackService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
         )
 
-        val stopIntent = Intent(this, AdhanPlaybackService::class.java).apply {
-            action = ACTION_STOP
+        val stopIntent = Intent(this, PrayerAlarmReceiver::class.java).apply {
+            action = PrayerAlarmReceiver.ACTION_STOP_ADHAN
+            putExtra(PrayerAlarmReceiver.EXTRA_ALARM_ID, notifId)
         }
-        val stopPendingIntent = PendingIntent.getService(
+        val stopPendingIntent = PendingIntent.getBroadcast(
             this,
             notifId + 10_000,
             stopIntent,
@@ -252,23 +260,18 @@ class AdhanPlaybackService : Service() {
         )
 
         val customSmall = RemoteViews(packageName, R.layout.notification_prayer_small).apply {
-            setImageViewResource(R.id.notification_icon, R.mipmap.ic_launcher)
-            setTextViewText(R.id.notification_badge, "صوت الأذان 🔊")
             setTextViewText(R.id.notification_title, title)
             setTextViewText(R.id.notification_body, "حي على الصلاة، حي على الفلاح")
         }
 
         val customExpanded = RemoteViews(packageName, R.layout.notification_prayer_expanded).apply {
-            setImageViewResource(R.id.notification_expanded_icon, R.mipmap.ic_launcher)
-            setTextViewText(R.id.notification_expanded_badge, "صوت الأذان 🔊")
             setTextViewText(R.id.notification_expanded_title, title)
             setTextViewText(R.id.notification_expanded_body, "حي على الصلاة، حي على الفلاح")
-            setViewVisibility(R.id.notification_btn_stop, View.VISIBLE)
-            setOnClickPendingIntent(R.id.notification_btn_stop, stopPendingIntent)
         }
 
-        return NotificationCompat.Builder(this, PrayerAlarmReceiver.CHANNEL_ADHAN)
-            .setSmallIcon(R.mipmap.ic_launcher)
+        val builder = NotificationCompat.Builder(this, PrayerAlarmReceiver.CHANNEL_ADHAN)
+            .setSmallIcon(R.drawable.ic_siraty_notification)
+            .setColor(Color.parseColor("#1B4D3E"))
             .setCustomContentView(customSmall)
             .setCustomBigContentView(customExpanded)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
@@ -279,10 +282,11 @@ class AdhanPlaybackService : Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_MAX)
-            .setColor(0xFF1E4B3D.toInt())
             .addAction(android.R.drawable.ic_media_pause, "إيقاف الأذان", stopPendingIntent)
-            .setOngoing(true)
-            .build()
+            .setDeleteIntent(stopPendingIntent)
+            .setOngoing(false)
+
+        return builder.build()
     }
 
     override fun onDestroy() {

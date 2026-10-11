@@ -1,3 +1,4 @@
+import 'package:qcf_quran/qcf_quran.dart' as qcf;
 import 'package:quran/quran.dart' as quran;
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
 import 'package:siraty/features/quran/data/models/surah_model.dart';
@@ -85,8 +86,29 @@ class MushafPageService {
     );
   }
 
-  /// Get the page number (1..604) for a specific verse.
+  static final Map<int, int> _authoritativeVersePageMap = _initVersePageMap();
+
+  static Map<int, int> _initVersePageMap() {
+    final Map<int, int> map = {};
+    for (int page = 1; page <= totalPages; page++) {
+      for (final range in qcf.getPageData(page)) {
+        final int surahNum = int.parse(range['surah'].toString());
+        final int startAyah = int.parse(range['start'].toString());
+        final int endAyah = int.parse(range['end'].toString());
+        for (int verse = startAyah; verse <= endAyah; verse++) {
+          map.putIfAbsent((surahNum << 10) | verse, () => page);
+        }
+      }
+    }
+    return map;
+  }
+
+  /// Get the page number (1..604) for a specific verse adhering to the authentic
+  /// 604-page printed Madinah Mushaf layout.
   static int getPageNumber(int surahNumber, int ayahNumber) {
+    final key = (surahNumber << 10) | ayahNumber;
+    final page = _authoritativeVersePageMap[key];
+    if (page != null) return page;
     return quran.getPageNumber(surahNumber, ayahNumber);
   }
 

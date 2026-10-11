@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import 'package:siraty/app/di/service_locator.dart';
 import 'package:siraty/core/services/prayer_scheduler_interface.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -276,28 +277,38 @@ class _HomePageState extends State<HomePage> {
     required bool needsNotification,
   }) async {
     try {
+      bool shouldOpenLocationPicker = false;
+
       if (needsLocation) {
         final locationService = getIt<LocationService>();
         final locPerm = await locationService.requestPermission();
         if (locPerm == LocationPermission.always ||
             locPerm == LocationPermission.whileInUse) {
           if (mounted) {
-            context.read<AzanCubit>().loadPrayerTimes();
+            // Auto-detect the actual GPS location and save it,
+            // so prayer times are computed for the real city — not Cairo default.
+            final detected =
+                await context.read<AzanCubit>().autoDetectLocation();
+            if (!detected) {
+              shouldOpenLocationPicker = true;
+            }
           }
+        } else {
+          shouldOpenLocationPicker = true;
         }
       }
 
       if (needsNotification) {
         final scheduler = getIt<PrayerSchedulerInterface>();
-        final granted = await scheduler.requestNotificationPermission();
+        await scheduler.requestNotificationPermission();
         await scheduler.requestExactAlarmPermission();
         await scheduler.requestIgnoreBatteryOptimizations();
 
         final prayerRepo = getIt<PrayerRepository>();
-        await prayerRepo.setNotificationsEnabled(granted);
+        await prayerRepo.setNotificationsEnabled(true);
 
         final isSupported = await scheduler.isAutoStartSupported();
-        if (isSupported && granted) {
+        if (isSupported) {
           final manufacturer = await scheduler.getDeviceManufacturer();
           if (mounted) {
             await AutostartGuideDialog.show(
@@ -313,6 +324,10 @@ class _HomePageState extends State<HomePage> {
       final notifEnabled = await prayerRepo.getNotificationsEnabled();
       if (notifEnabled) {
         await getIt<RefreshPrayerScheduleUseCase>().call();
+      }
+
+      if (shouldOpenLocationPicker && mounted) {
+        context.push('/prayer-location');
       }
     } catch (e) {
       debugPrint('Error executing permission requests: $e');

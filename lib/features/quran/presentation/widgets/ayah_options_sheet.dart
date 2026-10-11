@@ -5,8 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:siraty/core/constants/colors.dart';
+import 'package:siraty/core/widgets/app_snack_bar.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_audio_cubit.dart';
+import 'package:siraty/features/quran/presentation/cubit/quran_download_cubit.dart';
 import 'package:siraty/features/quran/presentation/widgets/ayah_card_share_dialog.dart';
 import 'package:siraty/features/quran/presentation/widgets/tafsir_bottom_sheet.dart';
 
@@ -64,6 +66,11 @@ class AyahOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final arabicAyah = QuranMetadata.toArabicDigits(ayahNumber);
     final formattedVerse = '﴿ $verseText ﴾ [سورة $surahName: $arabicAyah]';
+
+    final audioCubit = context.read<QuranAudioCubit>();
+    final downloadCubit = context.watch<QuranDownloadCubit>();
+    final reciter = audioCubit.state.selectedReciter;
+    final isDownloaded = downloadCubit.isAyahDownloaded(reciter.id, surahNumber, ayahNumber);
 
     return SafeArea(
       child: Padding(
@@ -128,7 +135,7 @@ class AyahOptionsSheet extends StatelessWidget {
               ),
               SizedBox(height: 18.h),
 
-              // Action Buttons: 2 Organized Rows of 3 Pillars
+              // Action Buttons: Row 1
               Row(
                 children: [
                   // 1. Tafsir
@@ -161,16 +168,9 @@ class AyahOptionsSheet extends StatelessWidget {
                               ayahNum: ayahNumber,
                               surahName: surahName,
                             );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'جارٍ تلاوة الآية $arabicAyah بصوت ${context.read<QuranAudioCubit>().state.selectedReciter.name}',
-                              style: TextStyle(
-                                  fontFamily: 'Amiri', fontSize: 13.sp),
-                            ),
-                            backgroundColor: AppColors.cardHighlight,
-                            duration: const Duration(seconds: 3),
-                          ),
+                        AppSnackBar.showInfo(
+                          context,
+                          message: 'جارٍ تلاوة الآية $arabicAyah بصوت ${context.read<QuranAudioCubit>().state.selectedReciter.name}',
                         );
                       },
                     ),
@@ -195,6 +195,7 @@ class AyahOptionsSheet extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 14.h),
+              // Action Buttons: Row 2
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -223,16 +224,9 @@ class AyahOptionsSheet extends StatelessWidget {
                       onTap: () {
                         onBookmark(ayahNumber);
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'تم حفظ الآية $arabicAyah من سورة $surahName كآخر قراءة',
-                              style: TextStyle(
-                                  fontFamily: 'Amiri', fontSize: 13.sp),
-                            ),
-                            backgroundColor: AppColors.accentGold,
-                            duration: const Duration(seconds: 2),
-                          ),
+                        AppSnackBar.showSuccess(
+                          context,
+                          message: 'تم حفظ الآية $arabicAyah من سورة $surahName كآخر قراءة',
                         );
                       },
                     ),
@@ -244,7 +238,6 @@ class AyahOptionsSheet extends StatelessWidget {
                       icon: Icons.favorite_border_rounded,
                       label: 'المفضلة',
                       onTap: () async {
-                        // Create FavoriteItem and toggle
                         final item = FavoriteItem(
                           id: '${surahNumber}_$ayahNumber',
                           type: FavoriteType.ayah,
@@ -255,15 +248,9 @@ class AyahOptionsSheet extends StatelessWidget {
                         await FavoritesService.instance.toggleFavorite(item);
                         if (!context.mounted) return;
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'تمت إضافة الآية إلى المفضلة',
-                              style: TextStyle(fontFamily: 'Amiri', fontSize: 13.sp),
-                            ),
-                            backgroundColor: AppColors.accentGold,
-                            duration: const Duration(seconds: 2),
-                          ),
+                        AppSnackBar.showSuccess(
+                          context,
+                          message: 'تمت إضافة الآية إلى المفضلة',
                         );
                       },
                     ),
@@ -271,6 +258,7 @@ class AyahOptionsSheet extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 14.h),
+              // Action Buttons: Row 3 (Copy & Offline Download)
               Row(
                 children: [
                   // 7. Copy Formatted Verse (نسخ النص)
@@ -281,17 +269,60 @@ class AyahOptionsSheet extends StatelessWidget {
                       onTap: () {
                         Clipboard.setData(ClipboardData(text: formattedVerse));
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'تم نسخ الآية الكريمة ومصدرها إلى الحافظة',
-                              style: TextStyle(
-                                  fontFamily: 'Amiri', fontSize: 13.sp),
-                            ),
-                            backgroundColor: AppColors.cardHighlight,
-                            duration: const Duration(seconds: 2),
-                          ),
+                        AppSnackBar.showSuccess(
+                          context,
+                          message: 'تم نسخ الآية الكريمة ومصدرها إلى الحافظة',
                         );
+                      },
+                    ),
+                  ),
+
+                  // 8. Download / Delete Offline Ayah Audio
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: isDownloaded
+                          ? Icons.offline_pin_rounded
+                          : Icons.download_rounded,
+                      iconColor: isDownloaded
+                          ? AppColors.emeraldGreen
+                          : AppColors.accentGold,
+                      label: isDownloaded ? 'محفوظة (حذف)' : 'تنزيل الآية',
+                      onTap: () async {
+                        Navigator.pop(context);
+                        if (isDownloaded) {
+                          await downloadCubit.deleteSingleAyah(
+                            reciterId: reciter.id,
+                            surahNum: surahNumber,
+                            ayahNum: ayahNumber,
+                          );
+                          if (!context.mounted) return;
+                          AppSnackBar.showInfo(
+                            context,
+                            message: 'تم حذف التنزيل المحلي للآية',
+                          );
+                        } else {
+                          AppSnackBar.showInfo(
+                            context,
+                            message: 'جارٍ تنزيل الآية بصوت ${reciter.name}...',
+                          );
+                          final ok = await downloadCubit.downloadSingleAyah(
+                            reciterId: reciter.id,
+                            surahNum: surahNumber,
+                            ayahNum: ayahNumber,
+                          );
+                          if (!context.mounted) return;
+                          if (ok) {
+                            AppSnackBar.showSuccess(
+                              context,
+                              message: 'تم اكتمال تنزيل الآية بنجاح للاستماع دون إنترنت',
+                            );
+                          } else {
+                            AppSnackBar.showError(
+                              context,
+                              message: 'تعذر تنزيل الآية، تأكد من الاتصال بالإنترنت',
+                            );
+                          }
+                        }
                       },
                     ),
                   ),
@@ -309,6 +340,7 @@ class AyahOptionsSheet extends StatelessWidget {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    Color? iconColor,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -323,7 +355,7 @@ class AyahOptionsSheet extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.borderSubtle),
             ),
-            child: Icon(icon, color: AppColors.accentGold, size: 20.r),
+            child: Icon(icon, color: iconColor ?? AppColors.accentGold, size: 20.r),
           ),
           SizedBox(height: 6.h),
           FittedBox(

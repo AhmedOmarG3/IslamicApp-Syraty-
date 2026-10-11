@@ -56,4 +56,6 @@ abstract class PrayerSchedulerInterface {
   Future<String> getDeviceManufacturer();
   Future<bool> isAutoStartSupported();
   Future<bool> openAutoStartSettings();
+  Future<void> updateOngoingNotification();
+  Future<void> setOngoingNotificationEnabled(bool enabled);
 }

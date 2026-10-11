@@ -2,25 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:qcf_quran_lite/qcf_quran_lite.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
 import 'package:siraty/features/quran/data/models/surah_model.dart';
 import 'package:siraty/features/quran/domain/services/last_read_service.dart';
+import 'package:siraty/features/quran/domain/services/mushaf_page_service.dart';
 import 'package:siraty/features/quran/presentation/cubit/mushaf_settings_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_audio_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
 import 'package:siraty/features/quran/presentation/widgets/ayah_options_sheet.dart';
+import 'package:siraty/features/quran/presentation/widgets/madinah_quran_page_view.dart';
+import 'package:siraty/features/quran/presentation/widgets/mushaf_highlight.dart';
 import 'package:siraty/features/quran/presentation/widgets/mushaf_theme_palette.dart';
 import 'package:siraty/features/quran/presentation/widgets/reading_settings_sheet.dart';
 import 'package:siraty/features/quran/presentation/widgets/tafsir_bottom_sheet.dart';
 
-/// Authentic Medina Mushaf reader page powered by [QuranPageView] and King Fahd QCF fonts.
+/// Authentic Madinah Mushaf reader page powered by King Fahd Complex QCF fonts.
 ///
 /// Features:
 /// - Exact 1:1 printed Madinah Mushaf layout (15 lines per page, 604 pages, Hafs narration).
-/// - Dynamic font sizing and reading paper themes (Cream, Night, Sepia) via [MushafSettingsCubit].
+/// - Reading paper themes (Cream, Night, Sepia) via [MushafSettingsCubit].
+/// - Smooth Pinch-to-Zoom with smart reset and authentic 15-line layout preservation.
 /// - High-contrast luxury Madinah Surah headers for perfect readability in both light & dark modes.
 /// - Distinct highlighting for saved bookmark / last-read verse so users easily spot where they left off.
 /// - Full Surah audio recitation and verse-by-verse audio tracking with interactive mini player.
@@ -49,6 +52,7 @@ class SurahPage extends StatefulWidget {
 class _SurahPageState extends State<SurahPage> {
   late final PageController _pageController;
   late int _currentPageNumber;
+  late int _activeSurahNumber;
   int? _selectedSurah;
   int? _selectedAyah;
   int? _bookmarkedSurah;
@@ -63,6 +67,8 @@ class _SurahPageState extends State<SurahPage> {
     if (widget.targetAyah != null) {
       _bookmarkedSurah = widget.surah.surahNumber;
       _bookmarkedAyah = widget.targetAyah;
+      _selectedSurah = widget.surah.surahNumber;
+      _selectedAyah = widget.targetAyah;
     } else {
       final lastRead = LastReadService.lastReadNotifier.value;
       if (lastRead != null && lastRead.surahNumber == widget.surah.surahNumber) {
@@ -78,24 +84,40 @@ class _SurahPageState extends State<SurahPage> {
         widget.initialPage! <= 604) {
       targetPage = widget.initialPage!;
     } else if (widget.targetAyah != null) {
-      targetPage = quran.getPageNumber(
+      // Explicit target ayah requested (e.g. from Home "متابعة القراءة" banner)
+      targetPage = MushafPageService.getPageNumber(
         widget.surah.surahNumber,
         widget.targetAyah!,
       );
-    } else if (_bookmarkedAyah != null) {
-      targetPage = quran.getPageNumber(
-        widget.surah.surahNumber,
-        _bookmarkedAyah!,
-      );
     } else {
-      final pages = quran.getSurahPages(widget.surah.surahNumber);
-      targetPage = pages.isNotEmpty ? pages.first : 1;
+      // When opening from Surah Index, always start from beginning of Surah (Ayah 1)
+      targetPage = MushafPageService.getPageNumber(widget.surah.surahNumber, 1);
     }
 
     _currentPageNumber = targetPage.clamp(1, 604);
     _pageController = PageController(initialPage: _currentPageNumber - 1);
 
-    // 3. Auto-open Tafsir sheet if requested
+    // 3. Initialize active surah: if the page contains widget.surah, prioritize it!
+    final initialSurahs = _getSurahsOnPage(_currentPageNumber);
+    if (initialSurahs.contains(widget.surah.surahNumber)) {
+      _activeSurahNumber = widget.surah.surahNumber;
+    } else if (initialSurahs.isNotEmpty) {
+      _activeSurahNumber = initialSurahs.first;
+    } else {
+      _activeSurahNumber = widget.surah.surahNumber;
+    }
+
+    // Ensure PageController is aligned to expected page after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _pageController.hasClients) {
+        final expected = _currentPageNumber - 1;
+        if (_pageController.page?.round() != expected) {
+          _pageController.jumpToPage(expected);
+        }
+      }
+    });
+
+    // 4. Auto-open Tafsir sheet if requested
     if (widget.autoOpenTafsir && widget.targetAyah != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -119,55 +141,65 @@ class _SurahPageState extends State<SurahPage> {
     super.dispose();
   }
 
+  List<int> _getSurahsOnPage(int pageNumber) {
+    final pageData = quran.getPageData(pageNumber);
+    final List<int> list = [];
+    for (final item in pageData) {
+      final int s = item['surah'] as int;
+      if (!list.contains(s)) {
+        list.add(s);
+      }
+    }
+    return list;
+  }
+
+  String _getSurahNameByNumber(int surahNum) {
+    if (surahNum >= 1 && surahNum <= SurahModel.surahNamesList.length) {
+      return SurahModel.surahNamesList[surahNum - 1];
+    }
+    return widget.surahName;
+  }
+
   void _handlePageChanged(int pageIndex) {
     final pageNumber = pageIndex < 1 ? pageIndex + 1 : (pageIndex <= 604 ? pageIndex : 604);
     if (_currentPageNumber == pageNumber) return;
 
+    final surahsOnPage = _getSurahsOnPage(pageNumber);
+    int newActiveSurah = _activeSurahNumber;
+    if (!surahsOnPage.contains(_activeSurahNumber)) {
+      newActiveSurah = surahsOnPage.isNotEmpty ? surahsOnPage.first : _activeSurahNumber;
+    }
+
     setState(() {
       _currentPageNumber = pageNumber;
+      _activeSurahNumber = newActiveSurah;
     });
 
-    final pageData = quran.getPageData(pageNumber);
-    if (pageData.isNotEmpty) {
-      final int primarySurahNum = pageData.first['surah'] as int;
-      final int primaryAyahNum = pageData.first['start'] as int;
-      final String primarySurahName =
-          (primarySurahNum >= 1 && primarySurahNum <= SurahModel.surahNamesList.length)
-              ? SurahModel.surahNamesList[primarySurahNum - 1]
-              : widget.surahName;
-
-      LastReadService.saveLastRead(
-        surahNumber: primarySurahNum,
-        surahName: primarySurahName,
-        ayahNumber: primaryAyahNum,
-      );
-
-      context.read<QuranCubit>().updateLastRead(primarySurahNum - 1);
-    }
+    // Update Quran resume banner index without corrupting the user's explicit saved bookmark
+    context.read<QuranCubit>().updateLastRead(newActiveSurah - 1);
   }
 
   int _getPrimarySurahNum() {
-    final pageData = quran.getPageData(_currentPageNumber);
-    if (pageData.isNotEmpty) {
-      return pageData.first['surah'] as int;
+    final surahsOnPage = _getSurahsOnPage(_currentPageNumber);
+    if (surahsOnPage.contains(_activeSurahNumber)) {
+      return _activeSurahNumber;
     }
-    return widget.surah.surahNumber;
+    if (surahsOnPage.isNotEmpty) {
+      return surahsOnPage.first;
+    }
+    return _activeSurahNumber;
   }
 
   String _getCurrentSurahName() {
-    final int sNum = _getPrimarySurahNum();
-    if (sNum >= 1 && sNum <= SurahModel.surahNamesList.length) {
-      return SurahModel.surahNamesList[sNum - 1];
-    }
-    return widget.surahName;
+    return _getSurahNameByNumber(_getPrimarySurahNum());
   }
 
   int _getCurrentJuz() {
     final pageData = quran.getPageData(_currentPageNumber);
     if (pageData.isNotEmpty) {
-      final int sNum = pageData.first['surah'] as int;
-      final int aNum = pageData.first['start'] as int;
-      return quran.getJuzNumber(sNum, aNum);
+      final int s0 = pageData.first['surah'] as int;
+      final int a0 = pageData.first['start'] as int;
+      return quran.getJuzNumber(s0, a0);
     }
     return 1;
   }
@@ -176,6 +208,7 @@ class _SurahPageState extends State<SurahPage> {
     setState(() {
       _selectedSurah = surahNumber;
       _selectedAyah = verseNumber;
+      _activeSurahNumber = surahNumber;
     });
 
     final String sName = (surahNumber >= 1 && surahNumber <= SurahModel.surahNamesList.length)
@@ -334,86 +367,6 @@ class _SurahPageState extends State<SurahPage> {
     );
   }
 
-  Widget _buildMadinahSurahHeader(BuildContext context, int surahNumber, bool isDark) {
-    final String sName = (surahNumber >= 1 && surahNumber <= SurahModel.surahNamesList.length)
-        ? SurahModel.surahNamesList[surahNumber - 1]
-        : quran.getSurahNameArabic(surahNumber);
-    final int count = quran.getVerseCount(surahNumber);
-    final bool isMakki = QuranMetadata.isMakki(surahNumber);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 14),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.cardDarkElevated : AppColors.cardLightElevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.accentGold,
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black38 : const Color(0x12000000),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'آياتها ${QuranMetadata.toArabicDigits(count)}',
-            style: TextStyle(
-              color: isDark ? AppColors.accentGoldLight : AppColors.textDarkMuted,
-              fontFamily: 'AmiriQuran',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          Text(
-            'سُورَةُ $sName',
-            style: const TextStyle(
-              color: AppColors.accentGold,
-              fontFamily: 'AmiriQuran',
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            isMakki ? 'مَكِّيَّة' : 'مَدَنِيَّة',
-            style: TextStyle(
-              color: isDark ? AppColors.accentGoldLight : AppColors.textDarkMuted,
-              fontFamily: 'AmiriQuran',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMadinahBasmallah(BuildContext context, int surahNumber, bool isDark) {
-    if (surahNumber == 9 || surahNumber == 1) {
-      return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Center(
-        child: Text(
-          'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
-          style: TextStyle(
-            fontFamily: 'AmiriQuran',
-            fontSize: 18,
-            color: isDark ? AppColors.accentGoldLight : AppColors.accentGold,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<MushafSettingsCubit, MushafSettingsState>(
@@ -435,7 +388,7 @@ class _SurahPageState extends State<SurahPage> {
                 final sNum = int.tryParse(parts[0]);
                 final aNum = int.tryParse(parts[1]);
                 if (sNum != null && aNum != null) {
-                  final audioPage = quran.getPageNumber(sNum, aNum);
+                  final audioPage = MushafPageService.getPageNumber(sNum, aNum);
                   if (audioPage != _currentPageNumber && _pageController.hasClients) {
                     _pageController.animateToPage(
                       audioPage - 1,
@@ -453,16 +406,14 @@ class _SurahPageState extends State<SurahPage> {
                 audioState.isPlaying && audioState.surahNumber == primarySurahNum;
 
             // Collect active highlights
-            final List<HighlightVerse> activeHighlights = [];
+            final List<MushafHighlight> activeHighlights = [];
 
             // 1. Saved Bookmark / Last Read Highlight (العلامة المحفوظة لتسهيل العودة)
             if (_bookmarkedSurah != null && _bookmarkedAyah != null) {
-              final bookmarkPage = quran.getPageNumber(_bookmarkedSurah!, _bookmarkedAyah!);
               activeHighlights.add(
-                HighlightVerse(
+                MushafHighlight(
                   surah: _bookmarkedSurah!,
                   verseNumber: _bookmarkedAyah!,
-                  page: bookmarkPage,
                   color: const Color(0xFFC8A25A).withValues(alpha: 0.38),
                 ),
               );
@@ -475,12 +426,10 @@ class _SurahPageState extends State<SurahPage> {
                 final sNum = int.tryParse(parts[0]);
                 final aNum = int.tryParse(parts[1]);
                 if (sNum != null && aNum != null) {
-                  final audioPage = quran.getPageNumber(sNum, aNum);
                   activeHighlights.add(
-                    HighlightVerse(
+                    MushafHighlight(
                       surah: sNum,
                       verseNumber: aNum,
-                      page: audioPage,
                       color: AppColors.accentGold.withValues(alpha: 0.35),
                     ),
                   );
@@ -490,12 +439,10 @@ class _SurahPageState extends State<SurahPage> {
 
             // 3. User tapped/selected verse highlight
             if (_selectedSurah != null && _selectedAyah != null) {
-              final selectedPage = quran.getPageNumber(_selectedSurah!, _selectedAyah!);
               activeHighlights.add(
-                HighlightVerse(
+                MushafHighlight(
                   surah: _selectedSurah!,
                   verseNumber: _selectedAyah!,
-                  page: selectedPage,
                   color: AppColors.accentGold.withValues(alpha: 0.45),
                 ),
               );
@@ -505,6 +452,7 @@ class _SurahPageState extends State<SurahPage> {
               textDirection: TextDirection.rtl,
               child: Scaffold(
                 backgroundColor: scaffoldBg,
+                resizeToAvoidBottomInset: false,
                 body: SafeArea(
                   child: Column(
                     children: [
@@ -534,14 +482,78 @@ class _SurahPageState extends State<SurahPage> {
                                       child: Column(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Text(
-                                            _getCurrentSurahName(),
-                                            style: TextStyle(
-                                              color: textColor,
-                                              fontFamily: 'AmiriQuran',
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                          Builder(
+                                            builder: (ctx) {
+                                              final surahs = _getSurahsOnPage(_currentPageNumber);
+                                              if (surahs.length > 1) {
+                                                return PopupMenuButton<int>(
+                                                  tooltip: 'اختيار السورة من الصفحة',
+                                                  color: AppColors.cardDarkElevated,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(14.r),
+                                                    side: const BorderSide(color: AppColors.borderGold, width: 0.8),
+                                                  ),
+                                                  initialValue: _getPrimarySurahNum(),
+                                                  onSelected: (int sNum) {
+                                                    setState(() {
+                                                      _activeSurahNumber = sNum;
+                                                    });
+                                                  },
+                                                  itemBuilder: (ctx) => surahs.map((sNum) {
+                                                    final isCurrent = sNum == _getPrimarySurahNum();
+                                                    return PopupMenuItem<int>(
+                                                      value: sNum,
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          Text(
+                                                            'سورة ${_getSurahNameByNumber(sNum)}',
+                                                            style: TextStyle(
+                                                              fontFamily: 'AmiriQuran',
+                                                              fontSize: 14.sp,
+                                                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                                                              color: isCurrent ? AppColors.accentGold : AppColors.textWhite,
+                                                            ),
+                                                          ),
+                                                          if (isCurrent)
+                                                            const Icon(Icons.check_rounded, color: AppColors.accentGold, size: 18),
+                                                        ],
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      Text(
+                                                        _getCurrentSurahName(),
+                                                        style: TextStyle(
+                                                          color: textColor,
+                                                          fontFamily: 'AmiriQuran',
+                                                          fontSize: 16,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 2),
+                                                      const Icon(
+                                                        Icons.keyboard_arrow_down_rounded,
+                                                        color: AppColors.accentGold,
+                                                        size: 18,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }
+                                              return Text(
+                                                _getCurrentSurahName(),
+                                                style: TextStyle(
+                                                  color: textColor,
+                                                  fontFamily: 'AmiriQuran',
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              );
+                                            },
                                           ),
                                           Text(
                                             '${QuranMetadata.getJuzNameFromNumber(_getCurrentJuz())} • صفحة ${QuranMetadata.toArabicDigits(_currentPageNumber)}',
@@ -585,6 +597,17 @@ class _SurahPageState extends State<SurahPage> {
                                         setState(() {
                                           _isHeaderVisible = false;
                                         });
+                                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'وضع ملء الشاشة: انقر مرتين على الشاشة لإظهار القوائم مجدداً',
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            duration: Duration(seconds: 2),
+                                            behavior: SnackBarBehavior.floating,
+                                          ),
+                                        );
                                       },
                                     ),
                                   ],
@@ -596,87 +619,119 @@ class _SurahPageState extends State<SurahPage> {
                       // Authentic 15-Line Madinah Mushaf Page View
                       Expanded(
                         child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
                           onDoubleTap: () {
                             setState(() {
                               _isHeaderVisible = !_isHeaderVisible;
                             });
                           },
-                          child: QuranPageView(
+                          child: MadinahQuranPageView(
                             pageController: _pageController,
+                            isFullScreen: !_isHeaderVisible,
                             highlights: activeHighlights,
                             pageBackgroundColor: bgColor,
-                            ayahStyle: TextStyle(
-                              fontSize: mushafSettings.fontSize,
-                              color: textColor,
-                            ),
+                            textColor: textColor,
+                            verseNumberColor: isDarkTheme
+                                ? AppColors.accentGoldLight
+                                : const Color(0xFF8B4513),
+                            basmalaColor: textColor,
+                            // The surah header plate is a fixed-colour gold
+                            // image, so its inscription stays dark brown in
+                            // every paper theme — a light colour would vanish
+                            // against the plate in night mode.
+                            headerTextColor: const Color(0xFF5A4520),
                             onPageChanged: _handlePageChanged,
                             onTap: _onAyahTapped,
                             onLongPress: _onAyahTapped,
-                            surahHeaderBuilder: (ctx, sNum) =>
-                                _buildMadinahSurahHeader(ctx, sNum, isDarkTheme),
-                            basmallahBuilder: (ctx, sNum) =>
-                                _buildMadinahBasmallah(ctx, sNum, isDarkTheme),
                             topBarBuilder: (ctx, page) {
-                              final pNum = page < 1 ? page + 1 : (page <= 604 ? page : 604);
-                              final pData = quran.getPageData(pNum);
-                              String sName = widget.surahName;
-                              int juzNum = 1;
-                              if (pData.isNotEmpty) {
-                                final int s = pData.first['surah'] as int;
-                                final int a = pData.first['start'] as int;
-                                juzNum = quran.getJuzNumber(s, a);
-                                if (s >= 1 && s <= SurahModel.surahNamesList.length) {
-                                  sName = SurahModel.surahNamesList[s - 1];
-                                }
-                              }
+                            final pNum = page < 1 ? page + 1 : (page <= 604 ? page : 604);
+                            final pData = quran.getPageData(pNum);
+                            int juzNum = 1;
+                            String sName = _getSurahNameByNumber(_getPrimarySurahNum());
+                            if (pData.isNotEmpty) {
+                              final int s0 = pData.first['surah'] as int;
+                              final int a0 = pData.first['start'] as int;
+                              juzNum = quran.getJuzNumber(s0, a0);
+                              sName = (pNum == _currentPageNumber)
+                                  ? _getSurahNameByNumber(_getPrimarySurahNum())
+                                  : _getSurahNameByNumber(s0);
+                            }
 
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      QuranMetadata.getJuzNameFromNumber(juzNum),
-                                      style: TextStyle(
-                                        color: isDarkTheme ? AppColors.textWhite : textColor.withValues(alpha: 0.75),
-                                        fontFamily: 'AmiriQuran',
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    Text(
-                                      sName,
-                                      style: const TextStyle(
-                                        color: AppColors.accentGold,
-                                        fontFamily: 'AmiriQuran',
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            bottomBarBuilder: (ctx, page) {
-                              final pNum = page < 1 ? page + 1 : (page <= 604 ? page : 604);
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                child: Center(
-                                  child: Text(
-                                    '— ${QuranMetadata.toArabicDigits(pNum)} —',
+                            final headerColor = isDarkTheme
+                                ? AppColors.accentGoldLight
+                                : const Color(0xFF9E8565);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 8.0, bottom: 2.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    QuranMetadata.getJuzNameFromNumber(juzNum),
                                     style: TextStyle(
-                                      color: isDarkTheme ? AppColors.textWhite : textColor.withValues(alpha: 0.85),
+                                      color: headerColor,
                                       fontFamily: 'AmiriQuran',
-                                      fontSize: 13,
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    sName,
+                                    style: TextStyle(
+                                      color: headerColor,
+                                      fontFamily: 'AmiriQuran',
+                                      fontSize: 14,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                ],
+                              ),
+                            );
+                          },
+                          bottomBarBuilder: (ctx, page) {
+                            final pNum = page < 1 ? page + 1 : (page <= 604 ? page : 604);
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6.0, bottom: 6.0),
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 2.0),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isDarkTheme
+                                          ? AppColors.accentGold.withValues(alpha: 0.5)
+                                          : const Color(0xFFC8A25A).withValues(alpha: 0.65),
+                                      width: 1.0,
+                                    ),
+                                    color: isDarkTheme
+                                        ? Colors.white.withValues(alpha: 0.05)
+                                        : const Color(0xFFC8A25A).withValues(alpha: 0.08),
+                                  ),
+                                  child: Text(
+                                    QuranMetadata.toArabicDigits(pNum),
+                                    textAlign: TextAlign.center,
+                                    textDirection: TextDirection.rtl,
+                                    strutStyle: const StrutStyle(
+                                      fontFamily: 'Amiri',
+                                      fontSize: 12.5,
+                                      height: 1.1,
+                                      forceStrutHeight: true,
+                                    ),
+                                    style: TextStyle(
+                                      color: isDarkTheme ? AppColors.accentGoldLight : const Color(0xFF6B5839),
+                                      fontFamily: 'Amiri',
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.1,
+                                    ),
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
+                              ),
+                            );
+                          },
                         ),
                       ),
+                    ),
 
                       // Floating Mini Audio Player (when audio is active)
                       if (audioState.isPlaying || audioState.activeAyah != null)
@@ -778,58 +833,70 @@ class _SurahPageState extends State<SurahPage> {
                           ),
                         ),
 
-                      // Bottom quick page flip bar
-                      Container(
-                        height: 38,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: headerCardColor,
-                          border: Border(
-                            top: BorderSide(
-                              color: borderColor.withValues(alpha: 0.25),
-                              width: 0.8,
-                            ),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            TextButton.icon(
-                              onPressed: _currentPageNumber < 604
-                                  ? () => _pageController.nextPage(
-                                        duration: const Duration(milliseconds: 250),
-                                        curve: Curves.easeInOut,
-                                      )
-                                  : null,
-                              icon: const Icon(Icons.arrow_back_ios_rounded, size: 14),
-                              label: const Text('الصفحة التالية', style: TextStyle(fontSize: 12)),
-                            ),
-                            InkWell(
-                              onTap: _showPageJumpDialog,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                child: Text(
-                                  'صفحة ${QuranMetadata.toArabicDigits(_currentPageNumber)} من ٦٠٤',
-                                  style: const TextStyle(
-                                    color: AppColors.accentGold,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                      // Bottom quick page flip bar (hidden when mini player is active to preserve Quran page space)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        height: (_isHeaderVisible &&
+                                !audioState.isPlaying &&
+                                audioState.activeAyah == null)
+                            ? 38
+                            : 0,
+                        child: (_isHeaderVisible &&
+                                !audioState.isPlaying &&
+                                audioState.activeAyah == null)
+                            ? Container(
+                                height: 38,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: headerCardColor,
+                                  border: Border(
+                                    top: BorderSide(
+                                      color: borderColor.withValues(alpha: 0.25),
+                                      width: 0.8,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            TextButton.icon(
-                              onPressed: _currentPageNumber > 1
-                                  ? () => _pageController.previousPage(
-                                        duration: const Duration(milliseconds: 250),
-                                        curve: Curves.easeInOut,
-                                      )
-                                  : null,
-                              icon: const Text('الصفحة السابقة', style: TextStyle(fontSize: 12)),
-                              label: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                            ),
-                          ],
-                        ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    TextButton.icon(
+                                      onPressed: _currentPageNumber < 604
+                                          ? () => _pageController.nextPage(
+                                                duration: const Duration(milliseconds: 250),
+                                                curve: Curves.easeInOut,
+                                              )
+                                          : null,
+                                      icon: const Icon(Icons.arrow_back_ios_rounded, size: 14),
+                                      label: const Text('الصفحة التالية', style: TextStyle(fontSize: 12)),
+                                    ),
+                                    InkWell(
+                                      onTap: _showPageJumpDialog,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        child: Text(
+                                          'صفحة ${QuranMetadata.toArabicDigits(_currentPageNumber)} من ٦٠٤',
+                                          style: const TextStyle(
+                                            color: AppColors.accentGold,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    TextButton.icon(
+                                      onPressed: _currentPageNumber > 1
+                                          ? () => _pageController.previousPage(
+                                                duration: const Duration(milliseconds: 250),
+                                                curve: Curves.easeInOut,
+                                              )
+                                          : null,
+                                      icon: const Text('الصفحة السابقة', style: TextStyle(fontSize: 12)),
+                                      label: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : const SizedBox.shrink(),
                       ),
                     ],
                   ),
@@ -841,4 +908,6 @@ class _SurahPageState extends State<SurahPage> {
       },
     );
   }
+
 }
+

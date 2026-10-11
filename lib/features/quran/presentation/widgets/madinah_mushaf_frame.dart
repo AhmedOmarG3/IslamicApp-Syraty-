@@ -170,11 +170,13 @@ class MadinahMushafFrame extends StatelessWidget {
                       if (pageNumber != null)
                         Text(
                           QuranMetadata.toArabicDigits(pageNumber!),
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontFamily: 'Amiri',
                             fontSize: 13.sp,
                             fontWeight: FontWeight.bold,
                             color: borderColor,
+                            height: 1.15,
                           ),
                         )
                       else

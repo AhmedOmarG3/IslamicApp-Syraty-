@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/constants/colors.dart';
-import 'package:siraty/core/widgets/islamic_ornament_painter.dart';
-import 'package:siraty/features/hadith/data/models/hadith_model.dart';
 import 'package:siraty/core/services/favorites_service.dart';
+import 'package:siraty/features/hadith/data/models/hadith_model.dart';
 
+/// Lightweight, modern, calm Islamic card displaying a Hadith with crystal-clear typography.
 class HadithCard extends StatelessWidget {
   final HadithModel hadith;
   final bool isDark;
@@ -28,212 +28,214 @@ class HadithCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.cardDark : AppColors.cardLight,
-        borderRadius: BorderRadius.circular(20.r),
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : AppColors.borderLight,
+          width: 0.9,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
       ),
-      child: CustomPaint(
-        painter: IslamicOrnamentPainter(
-          primaryGold: AppColors.accentGold.withValues(alpha: isDark ? 0.35 : 0.45),
-          borderWidth: 1.0,
-          cornerSize: 14.r,
-          showCornerFlourishes: true,
-          showInnerBorder: true,
-          showArch: false,
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top Bar: Number Pill + Book / Chapter Badge
-              Row(
-                children: [
-                  // Hadith Badge Cartouche
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentGold.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: AppColors.accentGold, width: 0.8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.auto_stories_rounded, size: 12.r, color: AppColors.accentGold),
-                        SizedBox(width: 4.w),
-                        Text(
-                          'حديث شريف',
-                          style: TextStyle(
-                            fontFamily: 'Amiri',
-                            color: AppColors.accentGold,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11.5.sp,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-
-                  // Chapter / Category Badge
-                  Expanded(
-                    child: Text(
-                      hadith.chapter.isNotEmpty ? hadith.chapter : hadith.book,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppColors.accentGoldLight : AppColors.primaryGreen,
-                      ),
-                    ),
-                  ),
-
-                  // Source Pill
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.5.h),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.cardDarkElevated : const Color(0xFFF2F5F2),
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(
-                        color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
-                        width: 0.7,
-                      ),
-                    ),
-                    child: Text(
-                      hadith.book,
-                      style: TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 10.5.sp,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              // Narrator if present
-              if (hadith.narrator.isNotEmpty) ...[
-                SizedBox(height: 8.h),
-                Text(
-                  'عن ${hadith.narrator}:',
-                  style: TextStyle(
-                    fontFamily: 'Amiri',
-                    fontSize: 12.sp,
-                    color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-
-              SizedBox(height: 10.h),
-
-              // Arabic Matn (Hadith Text)
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.bgDark.withValues(alpha: 0.55)
-                      : const Color(0xFFF9FBF8),
-                  borderRadius: BorderRadius.circular(14.r),
-                  border: Border.all(
-                    color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
-                    width: 0.8,
-                  ),
-                ),
-                child: SelectableText(
-                  hadith.arabic,
-                  textAlign: TextAlign.justify,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(
-                    fontFamily: 'Amiri',
-                    fontSize: 16.5.sp,
-                    height: 1.85,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
-                  ),
-                ),
-              ),
-
-              // Explanation / Benefit if available
-              if (hadith.explanation.isNotEmpty) ...[
-                SizedBox(height: 8.h),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Bar: Category / Chapter Badge + Book Source Pill
+            Row(
+              children: [
+                // Chapter / Topic Badge
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: AppColors.accentGold.withValues(alpha: 0.08),
+                    color: AppColors.accentGold
+                        .withValues(alpha: isDark ? 0.14 : 0.10),
                     borderRadius: BorderRadius.circular(10.r),
-                    border: Border.all(
-                      color: AppColors.accentGold.withValues(alpha: 0.25),
-                      width: 0.8,
-                    ),
                   ),
-                  child: Text(
-                    '💡 ${hadith.explanation}',
-                    style: TextStyle(
-                      fontFamily: 'Amiri',
-                      fontSize: 12.sp,
-                      height: 1.5,
-                      color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
-                    ),
-                  ),
-                ),
-              ],
-
-              SizedBox(height: 10.h),
-
-              // Rosette Divider
-              IslamicRosetteDivider(
-                goldColor: AppColors.accentGold.withValues(alpha: isDark ? 0.3 : 0.4),
-                height: 12.h,
-              ),
-
-              SizedBox(height: 8.h),
-
-              // Action Buttons: Favorite, Copy, Share Card
-              ListenableBuilder(
-                listenable: FavoritesService.instance,
-                builder: (context, _) {
-                  final isFav = FavoritesService.instance.items.any(
-                    (e) => (e.id == favId || e.id == hadith.id.toString()) && e.type == FavoriteType.hadith,
-                  );
-                  return Row(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      HadithActionButton(
-                        icon: isFav ? Icons.favorite_rounded : Icons.favorite_outline_rounded,
-                        label: isFav ? 'محفوظ' : 'حفظ',
-                        iconColor: isFav ? Colors.redAccent : AppColors.accentGold,
-                        onTap: onToggleFavorite,
-                        isDark: isDark,
+                      Icon(
+                        Icons.auto_stories_rounded,
+                        size: 13.r,
+                        color: AppColors.accentGold,
                       ),
-                      const Spacer(),
-                      HadithActionButton(
-                        icon: Icons.copy_rounded,
-                        label: 'نسخ',
-                        onTap: onCopy,
-                        isDark: isDark,
-                      ),
-                      SizedBox(width: 8.w),
-                      HadithActionButton(
-                        icon: Icons.share_rounded,
-                        label: 'مشاركة كبطاقة',
-                        onTap: onShare,
-                        isDark: isDark,
+                      SizedBox(width: 5.w),
+                      Text(
+                        hadith.chapter.isNotEmpty
+                            ? hadith.chapter
+                            : hadith.book,
+                        style: TextStyle(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? AppColors.accentGoldLight
+                              : AppColors.accentGold,
+                        ),
                       ),
                     ],
-                  );
-                },
+                  ),
+                ),
+                const Spacer(),
+
+                // Source Reference Pill
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.cardHighlight
+                        : const Color(0xFFF1EFEA),
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Text(
+                    hadith.book,
+                    style: TextStyle(
+                      fontSize: 10.5.sp,
+                      fontWeight: FontWeight.w600,
+                      color: isDark
+                          ? AppColors.textDimmed
+                          : AppColors.textDarkMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // Narrator if present
+            if (hadith.narrator.isNotEmpty) ...[
+              SizedBox(height: 10.h),
+              Text(
+                'عن ${hadith.narrator}:',
+                style: TextStyle(
+                  fontSize: 12.5.sp,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? AppColors.sageGreen : AppColors.sageGreenDark,
+                ),
               ),
             ],
-          ),
+
+            SizedBox(height: 8.h),
+
+            // Arabic Matn (Hadith Text) - Spacious, clear, untangled modern Arabic typography
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.bgDark.withValues(alpha: 0.45)
+                    : const Color(0xFFFAF8F5),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border(
+                  right: BorderSide(
+                    color: AppColors.accentGold.withValues(alpha: 0.70),
+                    width: 3.w,
+                  ),
+                ),
+              ),
+              child: SelectableText(
+                hadith.arabic,
+                textAlign: TextAlign.justify,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  height: 1.9,
+                  letterSpacing: 0.15,
+                  fontWeight: FontWeight.w400,
+                  color:
+                      isDark ? AppColors.textWhite : const Color(0xFF1B2621),
+                ),
+              ),
+            ),
+
+            // Explanation / Benefit if available
+            if (hadith.explanation.isNotEmpty) ...[
+              SizedBox(height: 8.h),
+              Container(
+                padding:
+                    EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 15.r,
+                      color: AppColors.accentGold,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        hadith.explanation,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          height: 1.6,
+                          color: isDark
+                              ? AppColors.textWhite.withValues(alpha: 0.85)
+                              : AppColors.textDarkPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            SizedBox(height: 12.h),
+
+            // Action Buttons: Favorite, Copy, Share Card
+            ListenableBuilder(
+              listenable: FavoritesService.instance,
+              builder: (context, _) {
+                final isFav = FavoritesService.instance.items.any(
+                  (e) =>
+                      (e.id == favId || e.id == hadith.id.toString()) &&
+                      e.type == FavoriteType.hadith,
+                );
+                return Row(
+                  children: [
+                    HadithActionButton(
+                      icon: isFav
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_outline_rounded,
+                      label: isFav ? 'محفوظ' : 'حفظ',
+                      iconColor: isFav
+                          ? Colors.redAccent
+                          : (isDark
+                              ? AppColors.accentGoldLight
+                              : AppColors.accentGold),
+                      onTap: onToggleFavorite,
+                      isDark: isDark,
+                    ),
+                    const Spacer(),
+                    HadithActionButton(
+                      icon: Icons.copy_rounded,
+                      label: 'نسخ',
+                      onTap: onCopy,
+                      isDark: isDark,
+                    ),
+                    SizedBox(width: 8.w),
+                    HadithActionButton(
+                      icon: Icons.share_rounded,
+                      label: 'مشاركة كبطاقة',
+                      onTap: onShare,
+                      isDark: isDark,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -258,32 +260,47 @@ class HadithActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10.r),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDarkElevated : Colors.white,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(
-            color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14.r, color: iconColor ?? AppColors.accentGold),
-            SizedBox(width: 5.w),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.sp,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
-              ),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10.r),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDarkElevated : const Color(0xFFF5F3ED),
+            borderRadius: BorderRadius.circular(10.r),
+            border: Border.all(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : AppColors.borderLight,
+              width: 0.7,
             ),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14.r,
+                color: iconColor ??
+                    (isDark
+                        ? AppColors.accentGoldLight
+                        : AppColors.accentGold),
+              ),
+              SizedBox(width: 5.w),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? AppColors.textWhite
+                      : AppColors.textDarkPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

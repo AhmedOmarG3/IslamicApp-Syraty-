@@ -22,10 +22,12 @@ enum AsrMadhab {
 class CalculationMethodSetting extends Equatable {
   final CalculationMethod method;
   final AsrMadhab asrMadhab;
+  final bool daylightSaving;
 
   const CalculationMethodSetting({
     this.method = CalculationMethod.auto,
     this.asrMadhab = AsrMadhab.shafi,
+    this.daylightSaving = false,
   });
 
   String get methodArabicName {
@@ -67,10 +69,12 @@ class CalculationMethodSetting extends Equatable {
   CalculationMethodSetting copyWith({
     CalculationMethod? method,
     AsrMadhab? asrMadhab,
+    bool? daylightSaving,
   }) {
     return CalculationMethodSetting(
       method: method ?? this.method,
       asrMadhab: asrMadhab ?? this.asrMadhab,
+      daylightSaving: daylightSaving ?? this.daylightSaving,
     );
   }
 
@@ -78,6 +82,7 @@ class CalculationMethodSetting extends Equatable {
     return {
       'method': method.name,
       'asrMadhab': asrMadhab.name,
+      'daylightSaving': daylightSaving,
     };
   }
 
@@ -91,9 +96,10 @@ class CalculationMethodSetting extends Equatable {
         (e) => e.name == json['asrMadhab'],
         orElse: () => AsrMadhab.shafi,
       ),
+      daylightSaving: json['daylightSaving'] as bool? ?? false,
     );
   }
 
   @override
-  List<Object?> get props => [method, asrMadhab];
+  List<Object?> get props => [method, asrMadhab, daylightSaving];
 }

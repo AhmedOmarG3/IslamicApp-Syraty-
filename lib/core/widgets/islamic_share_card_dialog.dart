@@ -362,17 +362,28 @@ class _IslamicShareCardDialogState extends State<IslamicShareCardDialog> {
                 ),
               ),
 
-              // Subtitle / Narrator if present
+              // Subtitle / Reference / Narrator if present
               if (widget.subtitle != null && widget.subtitle!.isNotEmpty) ...[
                 SizedBox(height: 12.h),
-                Text(
-                  widget.subtitle!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Amiri',
-                    fontSize: 12.sp,
-                    fontStyle: FontStyle.italic,
-                    color: subTextColor,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: goldAccent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(
+                      color: goldAccent.withValues(alpha: 0.28),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Text(
+                    widget.subtitle!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Amiri',
+                      fontSize: 12.5.sp,
+                      fontWeight: FontWeight.bold,
+                      color: subTextColor,
+                    ),
                   ),
                 ),
               ],

@@ -5,8 +5,9 @@ import 'package:siraty/core/theme/theme_cubit.dart';
 import 'package:siraty/features/azkar/data/datasource/azkar_local_data_source.dart';
 import 'package:siraty/features/azkar/data/repositories/azkar_repository_impl.dart';
 import 'package:siraty/features/azkar/domain/repositories/azkar_repository.dart';
-import 'package:siraty/features/azkar/domain/usecases/get_azkar_usecase.dart';
 import 'package:siraty/features/azkar/presentation/cubit/azkar_cubit.dart';
+import 'package:siraty/features/azkar/domain/usecases/get_azkar_usecase.dart';
+import 'package:siraty/core/services/haptic_service.dart';
 import 'package:siraty/core/services/native_prayer_scheduler.dart';
 import 'package:siraty/core/services/prayer_scheduler_interface.dart';
 import 'package:siraty/features/prayer/data/datasource/city_database_data_source.dart';
@@ -23,12 +24,15 @@ import 'package:siraty/features/prayer/presentation/cubit/azan_cubit.dart';
 import 'package:siraty/features/quran/data/datasource/quran_local_data_source.dart';
 import 'package:siraty/features/quran/data/repositories/quran_repository_impl.dart';
 import 'package:siraty/features/quran/data/services/quran_audio_service.dart';
+import 'package:siraty/features/quran/data/services/quran_download_service.dart';
 import 'package:siraty/features/quran/domain/repositories/quran_repository.dart';
+import 'package:siraty/features/quran/domain/services/khatma_service.dart';
 import 'package:siraty/features/quran/domain/services/last_read_service.dart';
 import 'package:siraty/features/quran/domain/usecases/get_surahs_usecase.dart';
 import 'package:siraty/features/quran/presentation/cubit/mushaf_settings_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_audio_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
+import 'package:siraty/features/quran/presentation/cubit/quran_download_cubit.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -40,6 +44,8 @@ Future<void> setupServiceLocator() async {
 
   // Services
   await LastReadService.loadLastRead();
+  await KhatmaService.init(sharedPreferences);
+  getIt.registerSingleton<HapticService>(HapticService(sharedPreferences));
 
   // Data Sources
   getIt.registerLazySingleton<QuranLocalDataSource>(
@@ -62,7 +68,14 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<PrayerSchedulerInterface>(
     () => const NativePrayerScheduler(),
   );
-  getIt.registerLazySingleton<QuranAudioService>(() => QuranAudioService());
+  // Quran Download Service & Audio
+  final quranDownloadService = QuranDownloadService(dio: getIt<Dio>());
+  await quranDownloadService.init();
+  getIt.registerSingleton<QuranDownloadService>(quranDownloadService);
+
+  getIt.registerLazySingleton<QuranAudioService>(
+    () => QuranAudioService(downloadService: getIt<QuranDownloadService>()),
+  );
 
   // Repositories
   getIt.registerLazySingleton<QuranRepository>(
@@ -111,6 +124,10 @@ Future<void> setupServiceLocator() async {
   // Audio playback is app-global state (mini player survives navigation)
   getIt.registerLazySingleton<QuranAudioCubit>(
     () => QuranAudioCubit(service: getIt()),
+  );
+  // Quran audio download manager & offline cache tracking
+  getIt.registerLazySingleton<QuranDownloadCubit>(
+    () => QuranDownloadCubit(downloadService: getIt<QuranDownloadService>()),
   );
   // Mushaf reading preferences (font size, paper theme) — persisted
   getIt.registerLazySingleton<MushafSettingsCubit>(

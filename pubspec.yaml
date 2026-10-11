@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.6+8
 
 environment:
   sdk: ^3.5.3
@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
     
     
@@ -42,7 +44,7 @@ dependencies:
   go_router: ^14.0.0
   shared_preferences: ^2.5.3
   dio: ^5.8.0+1
-  intl: 0.19.0
+  intl: ^0.20.2
   flutter_launcher_icons: ^0.14.3
   flutter_screenutil: ^5.9.3
   share_plus: ^10.1.4
@@ -54,12 +56,18 @@ dependencies:
   geolocator: ^13.0.2
   flutter_timezone: ^3.0.1
   flutter_compass: ^0.8.1
-  qcf_quran_lite: ^0.0.5
+  qcf_quran: ^0.0.5
   scrollable_positioned_list: ^0.3.8
+  just_audio_background: ^0.0.1-beta.17
 flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/new_app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#143E35"
+  adaptive_icon_foreground: "assets/images/new_app_icon.png"
+  adaptive_icon_foreground_inset: 0
+  remove_alpha_ios: true
 
 
 
@@ -91,9 +99,11 @@ flutter:
   assets:
     - assets/images/
     - assets/json/
-    - assets/audio/
-    - assets/audio/adhan/
-    - assets/audio/reminders/
+    # No `assets/audio/` here on purpose: the adhan and the prayer reminders
+    # ship once, under android/app/src/main/res/raw/, which is where
+    # AdhanPlaybackService plays them from. The adhan preview addresses the
+    # same files through an `android.resource://` URI. Keeping a second copy
+    # under assets/ duplicated ~13.6 MB.
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

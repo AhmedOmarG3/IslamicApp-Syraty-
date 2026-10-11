@@ -10,14 +10,11 @@ import '../../data/models/hadith_model.dart';
 import '../../data/services/hadith_service.dart';
 import '../widgets/hadith_card.dart';
 import '../widgets/hadith_chapter_tile.dart';
-import '../widgets/hadith_collection_card.dart';
-import '../widgets/hadith_prophetic_banner.dart';
 import '../widgets/hadith_search_bar.dart';
 
 enum HadithViewMode {
-  collections, // المستوى الأول: أقسام الأحاديث (البخاري، مسلم، الأربعون)
-  chapters, // المستوى الثاني: قائمة الأبواب والكتب للقسم المختار
-  hadiths, // المستوى الثالث: أحاديث الباب المختار
+  chapters, // المستوى الأول: قائمة الأبواب (جذر الصفحة)
+  hadiths, // المستوى الثاني: أحاديث الباب المختار
 }
 
 class HadithPage extends StatefulWidget {
@@ -28,94 +25,56 @@ class HadithPage extends StatefulWidget {
 }
 
 class _HadithPageState extends State<HadithPage> {
-  HadithViewMode _viewMode = HadithViewMode.collections;
+  HadithViewMode _viewMode = HadithViewMode.chapters;
 
-  // Selected collection info
-  Map<String, String> _activeCollection = _collections[0];
+  // The single hadith book bundled with the app.
+  static const Map<String, String> _activeCollection = {
+    'key': 'selected',
+    'label': 'الأحاديث النبوية الشريفة',
+    'subtitle': 'الأربعون النووية ومختارات السنة',
+  };
+
   HadithChapterInfo? _selectedChapter;
 
   List<HadithModel> _currentBookHadiths = [];
   List<HadithChapterInfo> _currentBookChapters = [];
-  List<HadithChapterInfo> _filteredChapters = [];
   List<HadithModel> _currentChapterHadiths = [];
 
   // Search states
   String _searchQuery = '';
-  String _chapterSearchQuery = '';
   List<HadithModel> _searchResults = [];
 
   bool _isLoading = false;
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _chapterSearchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-
-  static const List<Map<String, String>> _collections = [
-    {
-      'key': 'bukhari',
-      'label': 'صحيح البخاري',
-      'author': 'الإمام محمد بن إسماعيل البخاري (ت ٢٥٦ هـ)',
-      'badge': 'أصح كتب الحديث',
-      'subtitle': 'الجامع المسند الصحيح المختصر',
-      'description':
-          'أصح كتاب بعد كتاب الله تعالى، جمعه الإمام البخاري في ستة عشر عاماً وتحرى فيه أقصى درجات الصحة والتوثيق.',
-      'tagColor': 'gold',
-    },
-    {
-      'key': 'muslim',
-      'label': 'صحيح مسلم',
-      'author': 'الإمام مسلم بن الحجاج النيسابوري (ت ٢٦١ هـ)',
-      'badge': 'الجامع الصحيح',
-      'subtitle': 'المسند الصحيح بنقل العدل',
-      'description':
-          'ثاني أصح دواوين السنة النبوية، تميز بحسن الترتيب وسياق الروايات وجمع طرق الحديث في موضع واحد.',
-      'tagColor': 'green',
-    },
-    {
-      'key': 'selected',
-      'label': 'الأربعون النووية ومختارات السنة',
-      'author': 'الإمام النووي ومختارات صحيحة',
-      'badge': 'أحاديث جامعة',
-      'subtitle': 'أحاديث نبوية جامعة بشروحها',
-      'description':
-          'أحاديث نبوية جامعة لقواعد الدين ومكارم الأخلاق، مقرونة بالشرح والتوضيح الفقهي والتربوي.',
-      'tagColor': 'teal',
-    },
-  ];
 
   @override
   void initState() {
     super.initState();
     FavoritesService.instance.getFavorites();
+    _loadHadiths();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
-    _chapterSearchController.dispose();
     super.dispose();
   }
 
-  Future<void> _selectCollection(Map<String, String> collection) async {
-    setState(() {
-      _activeCollection = collection;
-      _isLoading = true;
-      _chapterSearchQuery = '';
-      _chapterSearchController.clear();
-      _viewMode = HadithViewMode.chapters;
-    });
+  /// Loads the bundled hadith collection and derives its chapter list.
+  Future<void> _loadHadiths() async {
+    setState(() => _isLoading = true);
 
-    final data = await HadithService.loadBook(collection['key']!);
+    final data = await HadithService.loadBook(_activeCollection['key']!);
     final chapters = HadithService.getChaptersWithCounts(data);
 
-    if (mounted) {
-      setState(() {
-        _currentBookHadiths = data;
-        _currentBookChapters = chapters;
-        _filteredChapters = chapters;
-        _isLoading = false;
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      _currentBookHadiths = data;
+      _currentBookChapters = chapters;
+      _isLoading = false;
+    });
   }
 
   void _selectChapter(HadithChapterInfo chapter) {
@@ -134,21 +93,6 @@ class _HadithPageState extends State<HadithPage> {
     if (_scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
-  }
-
-  void _onChapterSearchChanged(String query) {
-    setState(() {
-      _chapterSearchQuery = query.trim();
-      if (_chapterSearchQuery.isEmpty) {
-        _filteredChapters = _currentBookChapters;
-      } else {
-        final normalized = HadithService.normalizeArabic(_chapterSearchQuery);
-        _filteredChapters = _currentBookChapters.where((ch) {
-          final chNorm = HadithService.normalizeArabic(ch.name);
-          return chNorm.contains(normalized) || ch.name.contains(_chapterSearchQuery);
-        }).toList();
-      }
-    });
   }
 
   Future<void> _onGlobalSearch(String query) async {
@@ -273,10 +217,7 @@ class _HadithPageState extends State<HadithPage> {
       setState(() => _viewMode = HadithViewMode.chapters);
       return false;
     }
-    if (_viewMode == HadithViewMode.chapters) {
-      setState(() => _viewMode = HadithViewMode.collections);
-      return false;
-    }
+    // The chapter list is the root view, so back leaves the page.
     return true;
   }
 
@@ -285,7 +226,7 @@ class _HadithPageState extends State<HadithPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
-      canPop: _viewMode == HadithViewMode.collections && _searchQuery.isEmpty,
+      canPop: _viewMode == HadithViewMode.chapters && _searchQuery.isEmpty,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
         _handleBackPress();
@@ -305,8 +246,6 @@ class _HadithPageState extends State<HadithPage> {
 
   Widget _buildCurrentView(bool isDark) {
     switch (_viewMode) {
-      case HadithViewMode.collections:
-        return _buildCollectionsView(isDark);
       case HadithViewMode.chapters:
         return _buildChaptersView(isDark);
       case HadithViewMode.hadiths:
@@ -315,13 +254,14 @@ class _HadithPageState extends State<HadithPage> {
   }
 
   // ==========================================
-  // المستوى الأول: أقسام الأحاديث الرئيسية
+  // المستوى الأول: قائمة الأبواب
   // ==========================================
-  Widget _buildCollectionsView(bool isDark) {
+  Widget _buildChaptersView(bool isDark) {
     return Column(
       children: [
-        const AppHeaderBar(
-          title: 'الأحاديث النبوية الشريفة',
+        AppHeaderBar(
+          title: _activeCollection['label']!,
+          subtitle: _activeCollection['subtitle'],
           showBackButton: true,
         ),
         HadithSearchBar(
@@ -334,125 +274,14 @@ class _HadithPageState extends State<HadithPage> {
           withShadow: true,
         ),
         Expanded(
-          child: ListView(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-            children: [
-              HadithPropheticBanner(isDark: isDark),
-              SizedBox(height: 16.h),
-              Row(
-                children: [
-                  Container(
-                    width: 4.w,
-                    height: 18.h,
-                    decoration: BoxDecoration(
-                      color: AppColors.accentGold,
-                      borderRadius: BorderRadius.circular(4.r),
-                    ),
-                  ),
-                  SizedBox(width: 8.w),
-                  Text(
-                    'أمهات دواوين السنة النبوية',
-                    style: TextStyle(
-                      fontFamily: 'Amiri',
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              ..._collections.map((col) => Padding(
-                    padding: EdgeInsets.only(bottom: 12.h),
-                    child: HadithCollectionCard(
-                      collection: col,
-                      isDark: isDark,
-                      onTap: () => _selectCollection(col),
-                    ),
-                  )),
-              SizedBox(height: 20.h),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ==========================================
-  // المستوى الثاني: قائمة الأبواب والكتب
-  // ==========================================
-  Widget _buildChaptersView(bool isDark) {
-    return Column(
-      children: [
-        AppHeaderBar(
-          title: _activeCollection['label']!,
-          showBackButton: true,
-          onBack: () {
-            setState(() {
-              _viewMode = HadithViewMode.collections;
-            });
-          },
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.cardDark : AppColors.cardLight,
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(
-                color: isDark ? AppColors.borderSubtle : AppColors.borderLight,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.library_books_rounded, color: AppColors.accentGold, size: 16.r),
-                SizedBox(width: 8.w),
-                Expanded(
-                  child: Text(
-                    'قائمة الأبواب والكتب',
-                    style: TextStyle(
-                      fontFamily: 'Amiri',
-                      fontSize: 12.5.sp,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
-                    ),
-                  ),
-                ),
-                Text(
-                  _activeCollection['subtitle']!,
-                  style: TextStyle(
-                    fontFamily: 'Amiri',
-                    fontSize: 11.sp,
-                    color: AppColors.accentGold,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        HadithSearchBar(
-          controller: _chapterSearchController,
-          hintText: 'ابحث في أسماء الأبواب والكتب...',
-          onChanged: _onChapterSearchChanged,
-          onClear: () {
-            _chapterSearchController.clear();
-            _onChapterSearchChanged('');
-          },
-          isDark: isDark,
-          hasQuery: _chapterSearchQuery.isNotEmpty,
-          height: 44.h,
-        ),
-        Expanded(
-          child: _filteredChapters.isEmpty
+          child: _currentBookChapters.isEmpty
               ? _buildEmptyChaptersState(isDark)
               : ListView.separated(
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                  itemCount: _filteredChapters.length,
+                  itemCount: _currentBookChapters.length,
                   separatorBuilder: (_, __) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
-                    final ch = _filteredChapters[index];
+                    final ch = _currentBookChapters[index];
                     return HadithChapterTile(
                       chapter: ch,
                       isDark: isDark,
@@ -466,7 +295,7 @@ class _HadithPageState extends State<HadithPage> {
   }
 
   // ==========================================
-  // المستوى الثالث: أحاديث الباب المختار
+  // المستوى الثاني: أحاديث الباب المختار
   // ==========================================
   Widget _buildHadithsView(bool isDark) {
     return Column(
@@ -600,8 +429,8 @@ class _HadithPageState extends State<HadithPage> {
       children: [
         AppHeaderBar(
           title: _activeCollection['label']!,
+          subtitle: _activeCollection['subtitle'],
           showBackButton: true,
-          onBack: () => setState(() => _viewMode = HadithViewMode.collections),
         ),
         Expanded(
           child: AppShimmer(

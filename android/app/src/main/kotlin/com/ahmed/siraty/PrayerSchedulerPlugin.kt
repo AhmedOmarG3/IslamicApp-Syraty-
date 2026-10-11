@@ -104,6 +104,30 @@ class PrayerSchedulerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Ac
             "getDeviceManufacturer" -> {
                 result.success(getDeviceManufacturer())
             }
+            "updateOngoingNotification" -> {
+                OngoingPrayerNotification.update(context)
+                result.success(null)
+            }
+            "setOngoingNotificationEnabled" -> {
+                val enabled = call.argument<Boolean>("enabled") ?: true
+                val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+                prefs.edit()
+                    .putBoolean(OngoingPrayerNotification.KEY_ONGOING_ENABLED, enabled)
+                    .putBoolean("flutter." + OngoingPrayerNotification.KEY_ONGOING_ENABLED, enabled)
+                    .apply()
+
+                try {
+                    val widgetPrefs = es.antonborri.home_widget.HomeWidgetPlugin.getData(context)
+                    widgetPrefs.edit().putBoolean(OngoingPrayerNotification.KEY_ONGOING_ENABLED, enabled).apply()
+                } catch (_: Exception) {}
+
+                if (enabled) {
+                    OngoingPrayerNotification.update(context)
+                } else {
+                    OngoingPrayerNotification.cancel(context)
+                }
+                result.success(null)
+            }
             else -> result.notImplemented()
         }
     }
@@ -342,6 +366,7 @@ class PrayerSchedulerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Ac
                 putExtra(PrayerAlarmReceiver.EXTRA_RECITER_RAW, reciterRawResource)
                 putExtra(PrayerAlarmReceiver.EXTRA_TITLE, title)
                 putExtra(PrayerAlarmReceiver.EXTRA_BODY, body)
+                putExtra(PrayerAlarmReceiver.EXTRA_SCHEDULED_TIME, epochMillis)
             }
 
             val pendingIntent = PendingIntent.getBroadcast(
@@ -482,6 +507,9 @@ class PrayerSchedulerPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Ac
                 }
                 context.sendBroadcast(ayahIntent)
             }
+
+            // Update Ongoing Prayer Notification
+            OngoingPrayerNotification.update(context)
         } catch (e: Exception) {
             Log.w("SiratyScheduler", "Widget update failed: ${e.message}")
         }

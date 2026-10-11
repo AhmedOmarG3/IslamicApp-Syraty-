@@ -3,27 +3,17 @@ import 'package:equatable/equatable.dart';
 class AdhanReciter extends Equatable {
   final String id;
   final String displayName;
-  final String assetPath;
   final String rawResourceName;
-  final String? fajrAssetPath;
   final String? fajrRawResourceName;
 
   const AdhanReciter({
     required this.id,
     required this.displayName,
-    required this.assetPath,
     required this.rawResourceName,
-    this.fajrAssetPath,
     this.fajrRawResourceName,
   });
 
-  String getAssetPathFor({bool isFajr = false}) {
-    if (isFajr && fajrAssetPath != null) {
-      return fajrAssetPath!;
-    }
-    return assetPath;
-  }
-
+  /// The `res/raw` file holding the adhan used for [isFajr].
   String getRawResourceFor({bool isFajr = false}) {
     if (isFajr && fajrRawResourceName != null) {
       return fajrRawResourceName!;
@@ -31,12 +21,22 @@ class AdhanReciter extends Equatable {
     return rawResourceName;
   }
 
+  /// Android application id, used to address the bundled `res/raw` files.
+  static const String androidPackage = 'com.ahmed.siraty';
+
+  /// Playable URI for the in-app preview.
+  ///
+  /// The adhan ships exactly once, as `android/app/src/main/res/raw/*.mp3`,
+  /// because `AdhanPlaybackService` plays the alarm straight from there. The
+  /// preview reads the same file through an `android.resource://` URI rather
+  /// than a second copy under `assets/audio/`, which would duplicate ~13.6 MB.
+  String getPreviewUri({bool isFajr = false}) =>
+      'android.resource://$androidPackage/raw/${getRawResourceFor(isFajr: isFajr)}';
+
   static const defaultReciter = AdhanReciter(
     id: 'makkah',
     displayName: 'أذان الحرم المكي (الشيخ علي أحمد ملا)',
-    assetPath: 'assets/audio/adhan/adhan_makkah.mp3',
     rawResourceName: 'adhan_makkah',
-    fajrAssetPath: 'assets/audio/adhan/adhan_makkah_fajr.mp3',
     fajrRawResourceName: 'adhan_makkah_fajr',
   );
 
@@ -45,18 +45,20 @@ class AdhanReciter extends Equatable {
     AdhanReciter(
       id: 'makkah',
       displayName: 'أذان الحرم المكي (الشيخ علي أحمد ملا)',
-      assetPath: 'assets/audio/adhan/adhan_makkah.mp3',
       rawResourceName: 'adhan_makkah',
-      fajrAssetPath: 'assets/audio/adhan/adhan_makkah_fajr.mp3',
       fajrRawResourceName: 'adhan_makkah_fajr',
     ),
     AdhanReciter(
       id: 'ismail',
       displayName: 'أذان الشيخ مصطفى إسماعيل',
-      assetPath: 'assets/audio/adhan/adhan_ismail.mp3',
       rawResourceName: 'adhan_ismail',
-      fajrAssetPath: 'assets/audio/adhan/adhan_makkah_fajr.mp3',
       fajrRawResourceName: 'adhan_makkah_fajr',
+    ),
+    AdhanReciter(
+      id: 'tobar',
+      displayName: 'أذان الشيخ نصر الدين طوبار',
+      rawResourceName: 'nasr_topar',
+      fajrRawResourceName: 'nasr_topar_figr',
     ),
   ];
 
@@ -65,18 +67,20 @@ class AdhanReciter extends Equatable {
     AdhanReciter(
       id: 'makkah',
       displayName: 'أذان الحرم المكي (الشيخ علي أحمد ملا)',
-      assetPath: 'assets/audio/adhan/adhan_makkah.mp3',
       rawResourceName: 'adhan_makkah',
-      fajrAssetPath: 'assets/audio/adhan/adhan_makkah_fajr.mp3',
       fajrRawResourceName: 'adhan_makkah_fajr',
     ),
     AdhanReciter(
       id: 'alafasy',
       displayName: 'أذان الشيخ مشاري راشد العفاسي',
-      assetPath: 'assets/audio/adhan/adhan_makkah.mp3',
       rawResourceName: 'adhan_makkah',
-      fajrAssetPath: 'assets/audio/adhan/adhan_alafasy_fajr.mp3',
       fajrRawResourceName: 'adhan_alafasy_fajr',
+    ),
+    AdhanReciter(
+      id: 'tobar',
+      displayName: 'أذان الشيخ نصر الدين طوبار',
+      rawResourceName: 'nasr_topar',
+      fajrRawResourceName: 'nasr_topar_figr',
     ),
   ];
 
@@ -84,26 +88,26 @@ class AdhanReciter extends Equatable {
     AdhanReciter(
       id: 'makkah',
       displayName: 'أذان الحرم المكي (الشيخ علي أحمد ملا)',
-      assetPath: 'assets/audio/adhan/adhan_makkah.mp3',
       rawResourceName: 'adhan_makkah',
-      fajrAssetPath: 'assets/audio/adhan/adhan_makkah_fajr.mp3',
       fajrRawResourceName: 'adhan_makkah_fajr',
     ),
     AdhanReciter(
       id: 'alafasy',
       displayName: 'أذان الشيخ مشاري راشد العفاسي',
-      assetPath: 'assets/audio/adhan/adhan_makkah.mp3',
       rawResourceName: 'adhan_makkah',
-      fajrAssetPath: 'assets/audio/adhan/adhan_alafasy_fajr.mp3',
       fajrRawResourceName: 'adhan_alafasy_fajr',
     ),
     AdhanReciter(
       id: 'ismail',
       displayName: 'أذان الشيخ مصطفى إسماعيل',
-      assetPath: 'assets/audio/adhan/adhan_ismail.mp3',
       rawResourceName: 'adhan_ismail',
-      fajrAssetPath: 'assets/audio/adhan/adhan_makkah_fajr.mp3',
       fajrRawResourceName: 'adhan_makkah_fajr',
+    ),
+    AdhanReciter(
+      id: 'tobar',
+      displayName: 'أذان الشيخ نصر الدين طوبار',
+      rawResourceName: 'nasr_topar',
+      fajrRawResourceName: 'nasr_topar_figr',
     ),
   ];
 
@@ -118,9 +122,7 @@ class AdhanReciter extends Equatable {
     return {
       'id': id,
       'displayName': displayName,
-      'assetPath': assetPath,
       'rawResourceName': rawResourceName,
-      'fajrAssetPath': fajrAssetPath,
       'fajrRawResourceName': fajrRawResourceName,
     };
   }
@@ -133,9 +135,7 @@ class AdhanReciter extends Equatable {
   List<Object?> get props => [
         id,
         displayName,
-        assetPath,
         rawResourceName,
-        fajrAssetPath,
         fajrRawResourceName,
       ];
 }

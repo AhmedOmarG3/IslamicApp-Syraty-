@@ -12,12 +12,14 @@ import '../widgets/audio_player_controls.dart';
 import '../widgets/audio_surah_cover_card.dart';
 import '../widgets/current_reciter_tile.dart';
 import '../widgets/reciter_selection_sheet.dart';
+import '../widgets/surah_download_card.dart';
 
 class QuranAudioPlayerPage extends StatefulWidget {
   final int surahNumber;
   final String surahName;
   final int versesCount;
   final int initialAyah;
+  final String? reciterId;
 
   const QuranAudioPlayerPage({
     super.key,
@@ -25,6 +27,7 @@ class QuranAudioPlayerPage extends StatefulWidget {
     this.surahName = 'الفاتحة',
     this.versesCount = 7,
     this.initialAyah = 1,
+    this.reciterId,
   });
 
   @override
@@ -38,34 +41,49 @@ class _QuranAudioPlayerPageState extends State<QuranAudioPlayerPage> {
   @override
   void initState() {
     super.initState();
-    _loadSurahAndStartAudio();
+    _startPlayback();
+    _loadSurahData();
   }
 
-  Future<void> _loadSurahAndStartAudio() async {
+  void _startPlayback() {
+    final cubit = context.read<QuranAudioCubit>();
+
+    QuranReciter? targetReciter;
+    if (widget.reciterId != null) {
+      targetReciter = QuranAudioService.getReciterById(widget.reciterId!);
+      if (targetReciter != null && cubit.state.selectedReciter.id != targetReciter.id) {
+        cubit.setReciter(targetReciter);
+      }
+    }
+
+    final effectiveReciter = targetReciter ?? cubit.state.selectedReciter;
+
+    // Start playing if not already playing this surah in playlist mode at the requested ayah with this reciter
+    final isAlreadyPlayingThisSurahAyah =
+        cubit.state.surahNumber == widget.surahNumber &&
+            cubit.state.isPlaylistMode &&
+            cubit.state.isPlaying &&
+            cubit.state.activeAyah == widget.initialAyah &&
+            cubit.state.selectedReciter.id == effectiveReciter.id;
+
+    if (!isAlreadyPlayingThisSurahAyah) {
+      cubit.playSurah(
+        surahNum: widget.surahNumber,
+        versesCount: widget.versesCount,
+        surahName: widget.surahName,
+        reciter: effectiveReciter,
+        initialAyah: widget.initialAyah,
+      );
+    }
+  }
+
+  Future<void> _loadSurahData() async {
     final surah = await LastReadService.loadSurah(widget.surahNumber);
     if (mounted) {
       setState(() {
         _surahData = surah;
         _isLoadingSurah = false;
       });
-
-      final cubit = context.read<QuranAudioCubit>();
-
-      // Start playing if not already playing this surah in playlist mode at the requested ayah
-      final isAlreadyPlayingThisSurahAyah =
-          cubit.state.surahNumber == widget.surahNumber &&
-              cubit.state.isPlaylistMode &&
-              cubit.state.isPlaying &&
-              cubit.state.activeAyah == widget.initialAyah;
-
-      if (!isAlreadyPlayingThisSurahAyah) {
-        await cubit.playSurah(
-          surahNum: widget.surahNumber,
-          versesCount: widget.versesCount,
-          surahName: widget.surahName,
-          initialAyah: widget.initialAyah,
-        );
-      }
     }
   }
 
@@ -114,7 +132,7 @@ class _QuranAudioPlayerPageState extends State<QuranAudioPlayerPage> {
                     surahNumber: widget.surahNumber,
                     versesCount: widget.versesCount,
                   ),
-                  SizedBox(height: 18.h),
+                  SizedBox(height: 14.h),
 
                   // 2. Active Ayah Live Card
                   AudioActiveAyahCard(
@@ -126,7 +144,7 @@ class _QuranAudioPlayerPageState extends State<QuranAudioPlayerPage> {
 
                   // 3 & 4. Progress Slider & Playback Controls
                   AudioPlayerControls(isDark: isDark),
-                  SizedBox(height: 28.h),
+                  SizedBox(height: 24.h),
 
                   // 5. Current Reciter Tile (Tap opens modal sheet)
                   CurrentReciterTile(
@@ -137,7 +155,16 @@ class _QuranAudioPlayerPageState extends State<QuranAudioPlayerPage> {
                       onReciterSelected: _onReciterChanged,
                     ),
                   ),
-                  SizedBox(height: 24.h),
+                  SizedBox(height: 14.h),
+
+                  // 6. Offline Download Status (Optional at bottom)
+                  SurahDownloadCard(
+                    surahNumber: widget.surahNumber,
+                    surahName: widget.surahName,
+                    versesCount: widget.versesCount,
+                    isDark: isDark,
+                  ),
+                  SizedBox(height: 20.h),
                 ],
               ),
             ),

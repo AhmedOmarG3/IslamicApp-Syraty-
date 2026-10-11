@@ -21,7 +21,7 @@ extension MushafThemePalette on MushafThemeMode {
   Color get backgroundColor {
     switch (this) {
       case MushafThemeMode.cream:
-        return AppColors.cardLight; // Clean warm ivory paper
+        return const Color(0xFFFAF7EE); // Authentic warm Madinah ivory paper
       case MushafThemeMode.night:
         return const Color(0xFF131817);
       case MushafThemeMode.sepia:
@@ -32,8 +32,8 @@ extension MushafThemePalette on MushafThemeMode {
   Color get textColor {
     switch (this) {
       case MushafThemeMode.cream:
-        // Rich deep high-contrast Arabic calligraphy black-emerald
-        return const Color(0xFF0F1813);
+        // Pure deep high-contrast black calligraphy
+        return const Color(0xFF000000);
       case MushafThemeMode.night:
         // Crisp, pure, soft warm-white
         return const Color(0xFFF7F8F4);

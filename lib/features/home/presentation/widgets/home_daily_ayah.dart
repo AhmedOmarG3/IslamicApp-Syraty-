@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/widgets/islamic_ornament_painter.dart';
 
+import 'package:quran/quran.dart' as quran;
 import 'package:siraty/features/home/domain/services/daily_ayah_service.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
 import 'package:siraty/features/quran/domain/services/last_read_service.dart';
@@ -137,8 +138,8 @@ class HomeDailyAyah extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'AmiriQuran',
                   fontSize: ayahFontSize,
-                  fontWeight: FontWeight.bold,
-                  height: 1.85,
+                  fontWeight: FontWeight.normal,
+                  height: 2.0,
                   color: isDark ? const Color(0xFFFBF8F0) : const Color(0xFF1E1710),
                 ),
               ),
@@ -205,21 +206,18 @@ class HomeDailyAyah extends StatelessWidget {
                     icon: Icons.volume_up_rounded,
                     label: 'استماع',
                     isDark: isDark,
-                    onTap: () async {
+                    onTap: () {
                       HapticFeedback.lightImpact();
-                      final surah = await LastReadService.loadSurah(dailyAyah.surahNumber);
-                      final versesCount = surah?.verses.length ?? 0;
-                      if (context.mounted && surah != null && versesCount > 0) {
-                        context.push(
-                          '/quran-listen',
-                          extra: {
-                            'surahNumber': dailyAyah.surahNumber,
-                            'surahName': dailyAyah.surahName,
-                            'versesCount': versesCount,
-                            'initialAyah': dailyAyah.ayahNumber,
-                          },
-                        );
-                      }
+                      final versesCount = quran.getVerseCount(dailyAyah.surahNumber);
+                      context.push(
+                        '/quran-listen',
+                        extra: {
+                          'surahNumber': dailyAyah.surahNumber,
+                          'surahName': dailyAyah.surahName,
+                          'versesCount': versesCount,
+                          'initialAyah': dailyAyah.ayahNumber,
+                        },
+                      );
                     },
                   ),
                   _buildQuickAction(

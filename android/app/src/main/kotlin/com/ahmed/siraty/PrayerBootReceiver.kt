@@ -23,6 +23,7 @@ class PrayerBootReceiver : BroadcastReceiver() {
             action == "com.htc.intent.action.QUICKBOOT_POWERON"
         ) {
             rescheduleRemainingAlarms(context)
+            OngoingPrayerNotification.update(context)
         }
     }
 
@@ -63,6 +64,7 @@ class PrayerBootReceiver : BroadcastReceiver() {
                         putExtra(PrayerAlarmReceiver.EXTRA_RECITER_RAW, reciterRawResource)
                         putExtra(PrayerAlarmReceiver.EXTRA_TITLE, title)
                         putExtra(PrayerAlarmReceiver.EXTRA_BODY, body)
+                        putExtra(PrayerAlarmReceiver.EXTRA_SCHEDULED_TIME, epochMillis)
                     }
 
                     val pendingIntent = PendingIntent.getBroadcast(

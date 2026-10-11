@@ -145,6 +145,18 @@ class PrayerRepositoryImpl implements PrayerRepository {
     await sharedPreferences.setString(_keyFajrReciter, reciterId);
   }
 
+  static const String _keyOngoingNotification = 'prayer_ongoing_notification_enabled';
+
+  @override
+  Future<bool> getOngoingNotificationEnabled() async {
+    return sharedPreferences.getBool(_keyOngoingNotification) ?? true;
+  }
+
+  @override
+  Future<void> setOngoingNotificationEnabled(bool enabled) async {
+    await sharedPreferences.setBool(_keyOngoingNotification, enabled);
+  }
+
   @override
   Future<PrayerTimingsEntity?> getPrayerTimings({
     required String city,

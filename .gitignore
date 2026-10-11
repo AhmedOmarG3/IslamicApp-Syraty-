@@ -41,11 +41,21 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+/android/app/build/
 
 # Security & Secrets
 *.p12
 *.jks
 *.keystore
+*.mobileprovision
+*.cer
+*.p8
 key.properties
 .env*
 
+# Standalone Landing Page Repository
+landing_page/
+
+# Scratch & Temporary files
+scratch/

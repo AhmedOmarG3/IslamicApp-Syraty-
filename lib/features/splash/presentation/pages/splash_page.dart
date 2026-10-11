@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:siraty/core/constants/colors.dart';
@@ -45,6 +46,13 @@ class _SplashPageState extends State<SplashPage>
         context.go('/home');
         Future.delayed(const Duration(milliseconds: 200), () {
           DailyAyahWidgetService.executePendingWidgetAction();
+          const MethodChannel('siraty/app_channel').invokeMethod<String>('getInitialRoute').then((route) {
+            if (mounted && route != null && route.isNotEmpty) {
+              try {
+                context.push(route);
+              } catch (_) {}
+            }
+          });
         });
       }
     });

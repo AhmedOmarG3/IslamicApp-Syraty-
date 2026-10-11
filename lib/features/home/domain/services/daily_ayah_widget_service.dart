@@ -1,7 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:siraty/app/router/app_router.dart';
-import 'package:siraty/core/widgets/islamic_ornament_painter.dart';
 
 import 'package:siraty/features/home/domain/services/daily_ayah_service.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
@@ -134,11 +134,13 @@ class DailyAyahWidgetService {
     try {
       final ayah = DailyAyahService.getDailyAyah();
       final arabicAyah = QuranMetadata.toArabicDigits(ayah.ayahNumber);
-      final refText = 'سورة ${ayah.surahName} · $arabicAyah';
+      final cleanVerse =
+          ayah.verseText.replaceAll('﴿', '').replaceAll('﴾', '').trim();
+      final refText = 'سورة ${ayah.surahName} · آية $arabicAyah';
 
       // 1. Save data fields for the native widget
       await HomeWidget.saveWidgetData<String>(
-          'ayah_text', '﴿ ${ayah.verseText} ﴾');
+          'ayah_text', '﴿ $cleanVerse ﴾');
       await HomeWidget.saveWidgetData<String>('ayah_ref', refText);
       await HomeWidget.saveWidgetData<int>('surah_num', ayah.surahNumber);
       await HomeWidget.saveWidgetData<int>('ayah_num', ayah.ayahNumber);
@@ -147,6 +149,21 @@ class DailyAyahWidgetService {
       await HomeWidget.saveWidgetData<int>(
         'ayah_day_key',
         DailyAyahService.getDayKey(),
+      );
+
+      // Save curated verses as JSON so native Android can autonomously rotate verses at midnight
+      final allVerses = DailyAyahService.getAllCuratedVerses();
+      final versesJson = jsonEncode(allVerses
+          .map((v) => {
+                'surahNumber': v.surahNumber,
+                'surahName': v.surahName,
+                'ayahNumber': v.ayahNumber,
+                'verseText': v.verseText,
+              })
+          .toList());
+      await HomeWidget.saveWidgetData<String>(
+        'daily_ayah_curated_json',
+        versesJson,
       );
 
       // 2. Render the offscreen Flutter card into a high-res image
@@ -182,6 +199,9 @@ class DailyAyahWidgetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cleanVerse =
+        ayah.verseText.replaceAll('﴿', '').replaceAll('﴾', '').trim();
+
     return MediaQuery(
       data: const MediaQueryData(
         size: Size(360, 160),
@@ -192,125 +212,109 @@ class DailyAyahWidgetCard extends StatelessWidget {
         child: Container(
           width: 360,
           height: 160,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
               colors: [
-                Color(0xFF163E32),
-                Color(0xFF0F2B22),
-                Color(0xFF091C16),
+                Color(0xFF15382E),
+                Color(0xFF0D251E),
+                Color(0xFF081814),
               ],
             ),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: const Color(0xFFE2B86E).withValues(alpha: 0.25),
+              width: 1.0,
+            ),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x66000000),
-                blurRadius: 16,
-                offset: Offset(0, 6),
+                blurRadius: 14,
+                offset: Offset(0, 5),
               ),
             ],
           ),
-          child: CustomPaint(
-            painter: const IslamicOrnamentPainter(
-              primaryGold: Color(0xFFE2B86E),
-              borderWidth: 1.1,
-              cornerSize: 15,
-              showCornerFlourishes: true,
-              showInnerBorder: true,
-              showArch: true,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              child: Column(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Clean Header: "✦ آية اليوم" on right & Surah Reference on left
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const SizedBox(height: 1),
-
-                  // Header: Title Cartouche
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2B86E).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFE2B86E).withValues(alpha: 0.4),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: const Text(
-                      'آيَةُ اليَوْمِ · سِيرَتِي',
-                      style: TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFF3D295),
-                        letterSpacing: 0.3,
-                      ),
+                  const Text(
+                    '✦ آية اليوم',
+                    style: TextStyle(
+                      fontFamily: 'Amiri',
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFF3D295),
                     ),
                   ),
-
-                  // Ayah Text in AmiriQuran Calligraphy with FittedBox protection
-                  Expanded(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 320),
-                            child: Text(
-                              '﴿ ${ayah.verseText} ﴾',
-                              textAlign: TextAlign.center,
-                              textDirection: TextDirection.rtl,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'AmiriQuran',
-                                fontSize: ayah.verseText.length > 110
-                                    ? 11.5
-                                    : (ayah.verseText.length > 55 ? 13.0 : 15.0),
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFFFAF7EE),
-                                height: 1.45,
-                              ),
-                            ),
-                          ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2B86E).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFFE2B86E).withValues(alpha: 0.2),
+                          width: 0.7,
+                        ),
+                      ),
+                      child: Text(
+                        'سورة ${ayah.surahName} · آية $arabicAyah',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Amiri',
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE5C78A),
                         ),
                       ),
                     ),
                   ),
-
-                  // Reference Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2B86E).withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: const Color(0xFFE2B86E).withValues(alpha: 0.5),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Text(
-                      'سورة ${ayah.surahName} · آية $arabicAyah',
-                      style: const TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 10,
-                        color: Color(0xFFF3D295),
-                        fontWeight: FontWeight.bold,
+                ],
+              ),
+              const SizedBox(height: 7),
+              // Subtle Divider
+              Container(
+                height: 0.8,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              const SizedBox(height: 5),
+              // Ayah in authentic Quranic calligraphy
+              Expanded(
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 328),
+                      child: Text(
+                        '﴿ $cleanVerse ﴾',
+                        textAlign: TextAlign.center,
+                        textDirection: TextDirection.rtl,
+                        style: TextStyle(
+                          fontFamily: 'AmiriQuran',
+                          fontSize: cleanVerse.length > 130
+                              ? 13.5
+                              : (cleanVerse.length > 70 ? 15.0 : 17.5),
+                          fontWeight: FontWeight.normal,
+                          color: const Color(0xFFFAF7EE),
+                          height: 1.8,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 1),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
-
 }
-

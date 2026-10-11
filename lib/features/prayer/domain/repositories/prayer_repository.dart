@@ -16,6 +16,8 @@ abstract class PrayerRepository {
   Future<void> setSelectedReciter(String reciterId);
   Future<AdhanReciter> getSelectedFajrReciter();
   Future<void> setSelectedFajrReciter(String reciterId);
+  Future<bool> getOngoingNotificationEnabled();
+  Future<void> setOngoingNotificationEnabled(bool enabled);
 
   /// Backward-compatibility helper for any legacy consumers
   Future<PrayerTimingsEntity?> getPrayerTimings({

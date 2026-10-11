@@ -86,6 +86,7 @@ abstract class AppColors {
   static const Color errorRed = Color(0xFFE57373);
   static const Color warningOrange = Color(0xFFFFB74D);
   static const Color successGreen = Color(0xFF81C784);
+  static const Color emeraldGreen = Color(0xFF2ECC71);
 
   // Standard Neutrals
   static const Color white = Colors.white;

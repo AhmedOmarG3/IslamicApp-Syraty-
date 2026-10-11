@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
+import 'package:siraty/features/quran/data/models/surah_model.dart';
+import 'package:siraty/features/quran/domain/services/last_read_service.dart';
 import 'package:siraty/features/quran/domain/services/quran_search_service.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_state.dart';
@@ -59,19 +61,25 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
     }
   }
 
-  void _navigateToVerse(QuranSearchResult result) {
+  Future<void> _navigateToVerse(QuranSearchResult result) async {
     final cubit = context.read<QuranCubit>();
+    SurahModel? targetSurah;
     if (cubit.state is QuranLoaded) {
       final surahs = (cubit.state as QuranLoaded).surahs;
       final targetIndex = result.surahNumber - 1;
       if (targetIndex >= 0 && targetIndex < surahs.length) {
-        final surah = surahs[targetIndex];
-        context.push('/surah-details', extra: {
-          'surah': surah,
-          'surahName': result.surahName,
-          'targetAyah': result.ayahNumber,
-        });
+        targetSurah = surahs[targetIndex];
       }
+    }
+
+    targetSurah ??= await LastReadService.loadSurah(result.surahNumber);
+
+    if (mounted && targetSurah != null) {
+      context.push('/surah-details', extra: {
+        'surah': targetSurah,
+        'surahName': result.surahName,
+        'targetAyah': result.ayahNumber,
+      });
     }
   }
 

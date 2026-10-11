@@ -19,8 +19,8 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
 
     private fun getSafeLong(prefs: SharedPreferences, key: String): Long {
         return try {
-            val v = prefs.all[key]
-            when (v) {
+            val all = prefs.all
+            when (val v = all[key] ?: all["${key}_str"]) {
                 is Long -> v
                 is Int -> v.toLong()
                 is Number -> v.toLong()
@@ -63,6 +63,11 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
             var resolvedNextName = widgetData.getString("prayer_next_name", "الظهر") ?: "الظهر"
             var resolvedNextTime = widgetData.getString("prayer_next_time", dhuhr) ?: dhuhr
 
+            val savedNextEpoch = getSafeLong(widgetData, "prayer_next_epoch")
+            val savedNextName = widgetData.getString("prayer_next_name", null)
+            val savedNextTime = widgetData.getString("prayer_next_time", null)
+            val savedNextKey = widgetData.getString("prayer_next_key", null)
+
             val fajrEpoch = getSafeLong(widgetData, "prayer_fajr_epoch")
             val dhuhrEpoch = getSafeLong(widgetData, "prayer_dhuhr_epoch")
             val asrEpoch = getSafeLong(widgetData, "prayer_asr_epoch")
@@ -71,7 +76,13 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
 
             var targetEpoch = 0L
             val now = System.currentTimeMillis()
-            if (fajrEpoch > 0L && dhuhrEpoch > 0L && asrEpoch > 0L && maghribEpoch > 0L && ishaEpoch > 0L) {
+
+            if (savedNextEpoch > now && !savedNextName.isNullOrEmpty() && !savedNextTime.isNullOrEmpty()) {
+                resolvedNextName = savedNextName
+                resolvedNextTime = savedNextTime
+                resolvedNextKey = savedNextKey ?: "dhuhr"
+                targetEpoch = savedNextEpoch
+            } else if (fajrEpoch > 0L && dhuhrEpoch > 0L && asrEpoch > 0L && maghribEpoch > 0L && ishaEpoch > 0L) {
                 when {
                     now < fajrEpoch -> {
                         resolvedNextKey = "fajr"
@@ -124,9 +135,9 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
                 val mStr = String.format("%02d", minutes)
                 val sStr = String.format("%02d", seconds)
                 val timerStr = if (hours > 0) "$hStr:$mStr:$sStr" else "$mStr:$sStr"
-                "⏳ متبقي ${toArabicDigits(timerStr)}"
+                "متبقي ${toArabicDigits(timerStr)}"
             } else {
-                "⏳ حان وقت الصلاة"
+                "حان وقت الصلاة"
             }
 
             val nextKey = resolvedNextKey
@@ -150,7 +161,7 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
                             setViewVisibility(R.id.widget_prayer_countdown, View.VISIBLE)
                             setViewVisibility(R.id.widget_prayer_remaining, View.GONE)
                             setChronometerCountDown(R.id.widget_prayer_countdown, true)
-                            setChronometer(R.id.widget_prayer_countdown, baseTime, "⏳ متبقي %s", true)
+                            setChronometer(R.id.widget_prayer_countdown, baseTime, "متبقي %s", true)
                         } else {
                             setViewVisibility(R.id.widget_prayer_countdown, View.GONE)
                             setViewVisibility(R.id.widget_prayer_remaining, View.VISIBLE)
@@ -159,7 +170,7 @@ class PrayerWidgetProvider : HomeWidgetProvider() {
                     } else {
                         setViewVisibility(R.id.widget_prayer_countdown, View.GONE)
                         setViewVisibility(R.id.widget_prayer_remaining, View.VISIBLE)
-                        setTextViewText(R.id.widget_prayer_remaining, "⏳ حان وقت الصلاة")
+                        setTextViewText(R.id.widget_prayer_remaining, "حان وقت الصلاة")
                     }
 
                     setTextViewText(R.id.widget_time_fajr, fajr)

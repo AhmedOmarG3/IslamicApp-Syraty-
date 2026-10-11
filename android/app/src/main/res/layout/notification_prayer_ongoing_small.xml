@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="4dp"
+    android:paddingTop="2dp"
+    android:paddingEnd="4dp"
+    android:paddingBottom="4dp">
+
+    <!-- Row 1: Location (City) Only -->
+    <TextView
+        android:id="@+id/ongoing_city"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="القاهرة"
+        android:textColor="#A4B3AC"
+        android:textSize="12sp" />
+
+    <!-- Row 2: Next Prayer Name + Time + Countdown Timer (Chronometer) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/ongoing_next_prayer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="العصر ٠٤:٠٦ م"
+            android:textColor="#FFFFFF"
+            android:textSize="15.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ongoing_separator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="  —  "
+            android:textColor="#A4B3AC"
+            android:textSize="14sp" />
+
+        <!-- Native Chronometer for zero-battery countdown -->
+        <Chronometer
+            android:id="@+id/ongoing_chronometer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:format="متبقي %s"
+            android:textColor="#FFDF9A"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Fallback text when time is up -->
+        <TextView
+            android:id="@+id/ongoing_fallback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="حان وقت الصلاة"
+            android:textColor="#FFDF9A"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <!-- Row 3: Action Buttons (تحديث الموقع | افتح سيرتي) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/ongoing_btn_refresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="0dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="4dp"
+            android:text="تحديث الموقع"
+            android:textColor="#8EF2CA"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ongoing_btn_open"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="4dp"
+            android:text="افتح سيرتي"
+            android:textColor="#E5C78A"
+            android:textSize="12.5sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</LinearLayout>

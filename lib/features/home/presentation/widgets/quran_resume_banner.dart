@@ -7,6 +7,7 @@ import 'package:siraty/core/constants/dimensions.dart';
 import 'package:siraty/core/constants/spacing.dart';
 import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/core/widgets/app_card.dart';
+import 'package:siraty/features/quran/domain/services/last_read_service.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_state.dart';
 
@@ -34,10 +35,20 @@ class QuranResumeBanner extends StatelessWidget {
           margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
           padding: EdgeInsets.all(16.w),
           backgroundColor: AppColors.accentMint,
-          onTap: () => context.push(
-            '/surah-details',
-            extra: {'surah': surah, 'surahName': name},
-          ),
+          onTap: () {
+            final lastRead = LastReadService.lastReadNotifier.value;
+            final targetAyah = (lastRead != null && lastRead.surahNumber == surah.surahNumber)
+                ? lastRead.ayahNumber
+                : null;
+            context.push(
+              '/surah-details',
+              extra: {
+                'surah': surah,
+                'surahName': name,
+                if (targetAyah != null) 'targetAyah': targetAyah,
+              },
+            );
+          },
           child: Row(
             children: [
               Container(

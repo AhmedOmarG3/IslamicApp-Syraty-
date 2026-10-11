@@ -17,31 +17,15 @@ class HadithChapterInfo {
 
 class HadithService {
   static List<HadithModel>? _cachedSelected;
-  static List<HadithModel>? _cachedBukhari;
-  static List<HadithModel>? _cachedMuslim;
 
   /// Loads curated / selected hadiths from offline assets/json/hadith.json
   static Future<List<HadithModel>> getAllHadiths() async {
     return loadBook('selected');
   }
 
-  /// Loads hadiths for the requested book key ('selected', 'bukhari', 'muslim')
+  /// Loads hadiths for the requested book key ('selected')
   static Future<List<HadithModel>> loadBook(String bookKey) async {
     switch (bookKey) {
-      case 'bukhari':
-        if (_cachedBukhari != null && _cachedBukhari!.isNotEmpty) {
-          return _cachedBukhari!;
-        }
-        _cachedBukhari = await _loadJsonAsset('assets/json/bukhari.json');
-        return _cachedBukhari!;
-
-      case 'muslim':
-        if (_cachedMuslim != null && _cachedMuslim!.isNotEmpty) {
-          return _cachedMuslim!;
-        }
-        _cachedMuslim = await _loadJsonAsset('assets/json/muslim.json');
-        return _cachedMuslim!;
-
       case 'selected':
       default:
         if (_cachedSelected != null && _cachedSelected!.isNotEmpty) {
@@ -70,9 +54,36 @@ class HadithService {
 
   static List<HadithModel> _parseHadithsJson(String jsonString) {
     final List<dynamic> jsonList = json.decode(jsonString) as List<dynamic>;
-    return jsonList
-        .map((item) => HadithModel.fromJson(item as Map<String, dynamic>))
-        .toList();
+    final List<HadithModel> result = [];
+    String lastValidChapter = '';
+    int lastValidChapterId = 0;
+
+    for (final rawItem in jsonList) {
+      if (rawItem is! Map<String, dynamic>) continue;
+      final item = Map<String, dynamic>.from(rawItem);
+      final rawChapter = (item['chapter'] as String?)?.trim() ?? '';
+      final isZeroOrInvalid = rawChapter.isEmpty ||
+          rawChapter == '0' ||
+          rawChapter == 'الباب 0' ||
+          rawChapter == 'باب 0';
+
+      if (!isZeroOrInvalid) {
+        lastValidChapter = rawChapter;
+        final rawChapterId = item['chapterId'];
+        if (rawChapterId is num && rawChapterId > 0) {
+          lastValidChapterId = rawChapterId.toInt();
+        }
+      } else if (lastValidChapter.isNotEmpty) {
+        // Inherit preceding authentic chapter instead of placeholder
+        item['chapter'] = lastValidChapter;
+        if (lastValidChapterId > 0) {
+          item['chapterId'] = lastValidChapterId;
+        }
+      }
+
+      result.add(HadithModel.fromJson(item));
+    }
+    return result;
   }
 
   /// Normalizes Arabic text for accurate, diacritics-insensitive searching.

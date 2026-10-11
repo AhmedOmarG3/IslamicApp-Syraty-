@@ -127,7 +127,21 @@ class QuranAudioCubit extends Cubit<QuranAudioState> {
 
   Future<void> pause() => _service.pause();
 
-  Future<void> resume() => _service.resume();
+  Future<void> resume() async {
+    if (_service.player.audioSource == null &&
+        state.surahNumber != null &&
+        state.versesCount != null) {
+      await playSurah(
+        surahNum: state.surahNumber!,
+        versesCount: state.versesCount!,
+        surahName: state.surahName,
+        reciter: state.selectedReciter,
+        initialAyah: state.activeAyah ?? 1,
+      );
+      return;
+    }
+    await _service.resume();
+  }
 
   Future<void> stop() async {
     await _service.stop();

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:quran/quran.dart' as quran;
 import 'package:siraty/core/constants/assets.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
 import 'package:siraty/features/quran/domain/services/last_read_service.dart';
+import 'package:siraty/features/quran/domain/services/mushaf_page_service.dart';
 
 class HomeDailyCards extends StatelessWidget {
   const HomeDailyCards({super.key});
@@ -27,7 +27,7 @@ class HomeDailyCards extends StatelessWidget {
 
               final String subText;
               if (lastRead != null) {
-                final pageNum = quran.getPageNumber(
+                final pageNum = MushafPageService.getPageNumber(
                     lastRead.surahNumber, lastRead.ayahNumber);
                 final pageStr = 'صفحة ${QuranMetadata.toArabicDigits(pageNum)}';
                 final ayahStr =
@@ -281,15 +281,17 @@ class HomeDailyCards extends StatelessWidget {
                   : Icons.nights_stay_rounded;
 
 
+              // This card sits on a dark photographic overlay in BOTH themes,
+              // so its palette is theme-independent. Deriving it from `isDark`
+              // painted the light theme's dark text onto a near-black surface,
+              // leaving the title effectively invisible.
               final accentColor = isMorning
-                  ? AppColors.accentGold
-                  : (isDark ? const Color(0xFF8FB5E0) : const Color(0xFF356191));
+                  ? AppColors.accentGoldLight
+                  : const Color(0xFF9CC0E8);
+              const cardTextPrimary = AppColors.textWhite;
+              const cardTextMuted = Color(0xFFC3D2CB);
 
-              final cardBorderColor = isMorning
-                  ? AppColors.accentGold.withValues(alpha: isDark ? 0.35 : 0.45)
-                  : (isDark
-                      ? const Color(0xFF43658F).withValues(alpha: 0.45)
-                      : const Color(0xFF356191).withValues(alpha: 0.3));
+              final cardBorderColor = accentColor.withValues(alpha: 0.45);
 
               return GestureDetector(
                 onTap: () => context.push('/azkar', extra: adhkarTitle),
@@ -323,29 +325,21 @@ class HomeDailyCards extends StatelessWidget {
                       ),
 
                       // 2. Atmospheric Gradient Overlay
+                      // Identical in both themes: the card is always a dark
+                      // surface, which is what the light text is tuned for.
                       Positioned.fill(
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: isMorning
-                                  ? (isDark
-                                      ? [
-                                          const Color(0xFF261A0C).withValues(alpha: 0.88),
-                                          const Color(0xFF140D05).withValues(alpha: 0.94),
-                                        ]
-                                      : [
-                                          const Color(0xFF2E200E).withValues(alpha: 0.84),
-                                          const Color(0xFF181006).withValues(alpha: 0.90),
-                                        ])
-                                  : (isDark
-                                      ? [
-                                          const Color(0xFF0E1A2C).withValues(alpha: 0.88),
-                                          const Color(0xFF070F1C).withValues(alpha: 0.94),
-                                        ]
-                                      : [
-                                          const Color(0xFF122238).withValues(alpha: 0.84),
-                                          const Color(0xFF091422).withValues(alpha: 0.92),
-                                        ]),
+                                  ? [
+                                      const Color(0xFF261A0C).withValues(alpha: 0.90),
+                                      const Color(0xFF140D05).withValues(alpha: 0.95),
+                                    ]
+                                  : [
+                                      const Color(0xFF0E1A2C).withValues(alpha: 0.90),
+                                      const Color(0xFF070F1C).withValues(alpha: 0.95),
+                                    ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
@@ -377,7 +371,7 @@ class HomeDailyCards extends StatelessWidget {
                                   child: Icon(
                                     adhkarIcon,
                                     size: 14.r,
-                                    color: isDark ? AppColors.accentGoldLight : accentColor,
+                                    color: accentColor,
                                   ),
                                 ),
                                 Container(
@@ -399,7 +393,7 @@ class HomeDailyCards extends StatelessWidget {
                                             ? Icons.brightness_5_rounded
                                             : Icons.bedtime_rounded,
                                         size: 11.r,
-                                        color: isDark ? AppColors.accentGoldLight : accentColor,
+                                        color: accentColor,
                                       ),
                                       SizedBox(width: 3.w),
                                       Text(
@@ -407,7 +401,7 @@ class HomeDailyCards extends StatelessWidget {
                                         style: TextStyle(
                                           fontFamily: 'Amiri',
                                           fontSize: 10.sp,
-                                          color: isDark ? AppColors.accentGoldLight : accentColor,
+                                          color: accentColor,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -427,16 +421,14 @@ class HomeDailyCards extends StatelessWidget {
                                     fontFamily: 'Amiri',
                                     fontSize: 17.sp,
                                     fontWeight: FontWeight.bold,
-                                    color: isDark ? AppColors.textWhite : AppColors.textDarkPrimary,
-                                    shadows: isDark
-                                        ? [
-                                            Shadow(
-                                              color: Colors.black.withValues(alpha: 0.35),
-                                              blurRadius: 3,
-                                              offset: const Offset(0, 1),
-                                            ),
-                                          ]
-                                        : null,
+                                    color: cardTextPrimary,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withValues(alpha: 0.45),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -448,7 +440,14 @@ class HomeDailyCards extends StatelessWidget {
                                     fontFamily: 'Amiri',
                                     fontSize: 11.5.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark ? AppColors.textDimmed : AppColors.textDarkMuted,
+                                    color: cardTextMuted,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withValues(alpha: 0.40),
+                                        blurRadius: 3,
+                                        offset: const Offset(0, 1),
+                                      ),
+                                    ],
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -481,14 +480,14 @@ class HomeDailyCards extends StatelessWidget {
                                       fontFamily: 'Amiri',
                                       fontSize: 11.sp,
                                       fontWeight: FontWeight.bold,
-                                      color: isDark ? AppColors.accentGoldLight : accentColor,
+                                      color: accentColor,
                                     ),
                                   ),
                                   SizedBox(width: 4.w),
                                   Icon(
                                     Icons.arrow_forward_rounded,
                                     size: 13.r,
-                                    color: isDark ? AppColors.accentGoldLight : accentColor,
+                                    color: accentColor,
                                   ),
                                 ],
                               ),

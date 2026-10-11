@@ -1,5 +1,7 @@
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:siraty/app/di/service_locator.dart';
+import 'package:siraty/core/services/prayer_scheduler_interface.dart';
 import '../../data/models/prayer_snapshot_model.dart';
 import '../entities/prayer_time.dart';
 
@@ -27,6 +29,7 @@ class PrayerWidgetService {
         snapshot.tomorrow.getTime(PrayerType.fajr);
 
     final fajr = snapshot.today.getTime(PrayerType.fajr);
+    final shuruq = snapshot.today.getTime(PrayerType.sunrise);
     final dhuhr = snapshot.today.getTime(PrayerType.dhuhr);
     final asr = snapshot.today.getTime(PrayerType.asr);
     final maghrib = snapshot.today.getTime(PrayerType.maghrib);
@@ -56,7 +59,7 @@ class PrayerWidgetService {
     );
     await HomeWidget.saveWidgetData<String>(
       'prayer_next_name',
-      nextPrayer != null ? 'الصلاة القادمة: ${nextPrayer.arabicName}' : 'مواقيت الصلاة',
+      nextPrayer?.arabicName ?? 'مواقيت الصلاة',
     );
     await HomeWidget.saveWidgetData<String>(
       'prayer_next_time',
@@ -71,30 +74,54 @@ class PrayerWidgetService {
       remainingText,
     );
 
+    if (nextPrayer != null) {
+      await HomeWidget.saveWidgetData<int>(
+        'prayer_next_epoch',
+        nextPrayer.time.millisecondsSinceEpoch,
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'prayer_next_epoch_str',
+        nextPrayer.time.millisecondsSinceEpoch.toString(),
+      );
+    }
+
     if (fajr != null) {
       await HomeWidget.saveWidgetData<String>('prayer_fajr_time', _formatTime(fajr.time));
       await HomeWidget.saveWidgetData<int>('prayer_fajr_epoch', fajr.time.millisecondsSinceEpoch);
+      await HomeWidget.saveWidgetData<String>('prayer_fajr_epoch_str', fajr.time.millisecondsSinceEpoch.toString());
+    }
+    if (shuruq != null) {
+      await HomeWidget.saveWidgetData<String>('prayer_shuruq_time', _formatTime(shuruq.time));
     }
     if (dhuhr != null) {
       await HomeWidget.saveWidgetData<String>('prayer_dhuhr_time', _formatTime(dhuhr.time));
       await HomeWidget.saveWidgetData<int>('prayer_dhuhr_epoch', dhuhr.time.millisecondsSinceEpoch);
+      await HomeWidget.saveWidgetData<String>('prayer_dhuhr_epoch_str', dhuhr.time.millisecondsSinceEpoch.toString());
     }
     if (asr != null) {
       await HomeWidget.saveWidgetData<String>('prayer_asr_time', _formatTime(asr.time));
       await HomeWidget.saveWidgetData<int>('prayer_asr_epoch', asr.time.millisecondsSinceEpoch);
+      await HomeWidget.saveWidgetData<String>('prayer_asr_epoch_str', asr.time.millisecondsSinceEpoch.toString());
     }
     if (maghrib != null) {
       await HomeWidget.saveWidgetData<String>('prayer_maghrib_time', _formatTime(maghrib.time));
       await HomeWidget.saveWidgetData<int>('prayer_maghrib_epoch', maghrib.time.millisecondsSinceEpoch);
+      await HomeWidget.saveWidgetData<String>('prayer_maghrib_epoch_str', maghrib.time.millisecondsSinceEpoch.toString());
     }
     if (isha != null) {
       await HomeWidget.saveWidgetData<String>('prayer_isha_time', _formatTime(isha.time));
       await HomeWidget.saveWidgetData<int>('prayer_isha_epoch', isha.time.millisecondsSinceEpoch);
+      await HomeWidget.saveWidgetData<String>('prayer_isha_epoch_str', isha.time.millisecondsSinceEpoch.toString());
     }
 
     await HomeWidget.updateWidget(
       name: androidWidgetName,
       androidName: androidWidgetName,
     );
+
+    try {
+      final scheduler = getIt<PrayerSchedulerInterface>();
+      await scheduler.updateOngoingNotification();
+    } catch (_) {}
   }
 }

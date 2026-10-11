@@ -4,44 +4,30 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:siraty/features/quran/presentation/widgets/mushaf_theme_palette.dart';
 
 class MushafSettingsState extends Equatable {
-  /// Base ayah font size (surahs with <= 8 verses scale it up 1.15x).
-  final double fontSize;
   final MushafThemeMode themeMode;
 
   const MushafSettingsState({
-    this.fontSize = 22.0,
     this.themeMode = MushafThemeMode.cream,
   });
 
   @override
-  List<Object?> get props => [fontSize, themeMode];
+  List<Object?> get props => [themeMode];
 }
 
-/// Reading preferences for the Mushaf surface (font size + paper theme),
-/// persisted to SharedPreferences so choices survive app restarts.
+/// Reading preferences for the Mushaf surface (paper theme), persisted to
+/// SharedPreferences so the choice survives app restarts.
+///
+/// There is deliberately no font-size setting: the Madinah Mushaf is rendered
+/// with a fixed per-page QCF font, and resizing it would break the printed
+/// 15-line page layout.
 class MushafSettingsCubit extends Cubit<MushafSettingsState> {
-  static const String _fontSizeKey = 'mushaf_font_size';
   static const String _themeModeKey = 'mushaf_theme_mode';
-
-  static const double minFontSize = 17.0;
-  static const double maxFontSize = 34.0;
 
   final SharedPreferences _prefs;
 
   MushafSettingsCubit({required SharedPreferences prefs})
       : _prefs = prefs,
-        super(
-          MushafSettingsState(
-            fontSize: _loadFontSize(prefs),
-            themeMode: _loadThemeMode(prefs),
-          ),
-        );
-
-  static double _loadFontSize(SharedPreferences prefs) {
-    final saved = prefs.getDouble(_fontSizeKey);
-    if (saved == null) return 22.0;
-    return saved.clamp(minFontSize, maxFontSize);
-  }
+        super(MushafSettingsState(themeMode: _loadThemeMode(prefs)));
 
   static MushafThemeMode _loadThemeMode(SharedPreferences prefs) {
     final index = prefs.getInt(_themeModeKey);
@@ -55,30 +41,8 @@ class MushafSettingsCubit extends Cubit<MushafSettingsState> {
   /// to follow the app's light/dark mode on first open).
   bool get hasSavedTheme => _prefs.containsKey(_themeModeKey);
 
-  void setFontSize(double size) {
-    final clamped = size.clamp(minFontSize, maxFontSize).toDouble();
-    _prefs.setDouble(_fontSizeKey, clamped);
-    emit(state.copyWith(fontSize: clamped));
-  }
-
-  void decreaseFontSize() => setFontSize(state.fontSize - 1.0);
-
-  void increaseFontSize() => setFontSize(state.fontSize + 1.0);
-
   void setThemeMode(MushafThemeMode mode) {
     _prefs.setInt(_themeModeKey, mode.index);
-    emit(state.copyWith(themeMode: mode));
-  }
-}
-
-extension _MushafSettingsStateCopyWith on MushafSettingsState {
-  MushafSettingsState copyWith({
-    double? fontSize,
-    MushafThemeMode? themeMode,
-  }) {
-    return MushafSettingsState(
-      fontSize: fontSize ?? this.fontSize,
-      themeMode: themeMode ?? this.themeMode,
-    );
+    emit(MushafSettingsState(themeMode: mode));
   }
 }

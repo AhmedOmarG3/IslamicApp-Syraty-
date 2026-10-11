@@ -129,4 +129,21 @@ class NativePrayerScheduler implements PrayerSchedulerInterface {
       return false;
     }
   }
+
+  @override
+  Future<void> updateOngoingNotification() async {
+    try {
+      await _channel.invokeMethod<void>('updateOngoingNotification');
+    } catch (_) {}
+  }
+
+  @override
+  Future<void> setOngoingNotificationEnabled(bool enabled) async {
+    try {
+      await _channel.invokeMethod<void>(
+        'setOngoingNotificationEnabled',
+        {'enabled': enabled},
+      );
+    } catch (_) {}
+  }
 }

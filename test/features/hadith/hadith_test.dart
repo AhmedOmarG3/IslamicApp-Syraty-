@@ -244,22 +244,22 @@ void main() {
       expect(model.book, 'صحيح البخاري');
     });
 
-    test('bukhari.json and muslim.json parse all items successfully without any errors', () async {
-      final bukhariFile = io.File('assets/json/bukhari.json');
+    test('hadith.json parses all items successfully without any errors', () async {
+      final hadithFile = io.File('assets/json/hadith.json');
 
-      expect(bukhariFile.existsSync(), isTrue);
-      final bukhariStr = await bukhariFile.readAsString();
-      final bukhariList = HadithService.parseHadithsJsonString(bukhariStr);
-      expect(bukhariList.length, 7580);
-      expect(bukhariList.first.book, 'صحيح البخاري');
-      expect(bukhariList.first.chapter, 'بدء الوحي');
+      expect(hadithFile.existsSync(), isTrue);
+      final hadithStr = await hadithFile.readAsString();
+      final hadithList = HadithService.parseHadithsJsonString(hadithStr);
+      expect(hadithList, isNotEmpty);
+      expect(hadithList.first.id, 1);
 
-      final muslimFile = io.File('assets/json/muslim.json');
-      expect(muslimFile.existsSync(), isTrue);
-      final muslimStr = await muslimFile.readAsString();
-      final muslimList = HadithService.parseHadithsJsonString(muslimStr);
-      expect(muslimList.length, 7360);
-      expect(muslimList.first.book, 'صحيح مسلم');
+      // Verify that 'الباب 0' placeholder is eliminated and correctly mapped
+      final zeroChapters =
+          hadithList.where((h) => h.chapter == 'الباب 0' || h.chapter == '0');
+      expect(zeroChapters.isEmpty, isTrue);
+
+      final chapters = HadithService.getChaptersWithCounts(hadithList);
+      expect(chapters.any((c) => c.name.contains('0')), isFalse);
     });
   });
 }

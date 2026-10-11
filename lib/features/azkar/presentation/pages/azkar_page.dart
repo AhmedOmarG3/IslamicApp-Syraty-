@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/app/di/service_locator.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
+import 'package:siraty/core/services/haptic_service.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/core/widgets/app_skeleton.dart';
 import 'package:siraty/core/widgets/islamic_share_card_dialog.dart';
@@ -74,15 +75,21 @@ class _AzkarPageState extends State<AzkarPage> {
     switch (_selectedTab) {
       case 'أذكار الصباح':
         final cat = _allAzkar.firstWhere(
-          (c) => c.category.contains('الصباح'),
-          orElse: () => _allAzkar.first,
+          (c) => c.category == 'أذكار الصباح',
+          orElse: () => _allAzkar.firstWhere(
+            (c) => c.category.contains('الصباح'),
+            orElse: () => _allAzkar.first,
+          ),
         );
         return cat.zekrItems;
 
       case 'أذكار المساء':
         final cat = _allAzkar.firstWhere(
-          (c) => c.category.contains('المساء'),
-          orElse: () => _allAzkar.first,
+          (c) => c.category == 'أذكار المساء',
+          orElse: () => _allAzkar.firstWhere(
+            (c) => c.category.contains('المساء'),
+            orElse: () => _allAzkar.length > 1 ? _allAzkar[1] : _allAzkar.first,
+          ),
         );
         return cat.zekrItems;
 
@@ -123,12 +130,12 @@ class _AzkarPageState extends State<AzkarPage> {
     final key = '${_selectedTab}_$index';
     final current = _getRemaining(index, targetCount);
     if (current > 0) {
-      HapticFeedback.lightImpact();
+      getIt<HapticService>().triggerTap();
       setState(() {
         _remainingCounts[key] = current - 1;
       });
       if (current - 1 == 0) {
-        HapticFeedback.mediumImpact();
+        getIt<HapticService>().triggerCompletion();
       }
     }
   }
@@ -147,7 +154,7 @@ class _AzkarPageState extends State<AzkarPage> {
         _remainingCounts.remove(key);
       }
     });
-    HapticFeedback.mediumImpact();
+    getIt<HapticService>().triggerTap();
   }
 
   void _copyText(String text) {
@@ -361,206 +368,224 @@ class _AzkarPageState extends State<AzkarPage> {
 
                       return Container(
                         margin: EdgeInsets.only(bottom: 14.h),
-                        padding: EdgeInsets.all(16.r),
                         decoration: BoxDecoration(
-                          color:
-                              isDark ? AppColors.cardDark : AppColors.cardLight,
+                          color: isDone
+                              ? (isDark
+                                  ? const Color(0xFF132A22)
+                                  : const Color(0xFFF3FAF6))
+                              : (isDark ? AppColors.cardDark : AppColors.cardLight),
                           borderRadius: BorderRadius.circular(18.r),
                           border: Border.all(
                             color: isDone
-                                ? AppColors.successGreen
+                                ? AppColors.successGreen.withValues(alpha: 0.35)
                                 : (isDark
-                                    ? AppColors.borderSubtle
+                                    ? Colors.white.withValues(alpha: 0.08)
                                     : AppColors.borderLight),
-                            width: isDone ? 1.4 : 1,
+                            width: isDone ? 1.2 : 0.8,
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Top row: Item Index + Target count badge
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  width: 32.r,
-                                  height: 32.r,
-                                  alignment: Alignment.center,
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? AppColors.cardHighlight
-                                        : AppColors.iconBgCircleLight,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    QuranMetadata.toArabicDigits(index + 1),
-                                    style: AppTextStyles.caption.copyWith(
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? AppColors.sageGreen
-                                          : AppColors.sageGreenDark,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 10.w, vertical: 4.h),
-                                  decoration: BoxDecoration(
-                                    color: isDone
-                                        ? AppColors.successGreen
-                                            .withValues(alpha: 0.15)
-                                        : (isDark
-                                            ? AppColors.cardHighlight
-                                            : AppColors.iconBgCircleLight),
-                                    borderRadius: BorderRadius.circular(12.r),
-                                    border: Border.all(
-                                      color: isDone
-                                          ? AppColors.successGreen
-                                          : AppColors.accentGold
-                                              .withValues(alpha: 0.5),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isDone
-                                        ? 'مُكتمَل'
-                                        : '${QuranMetadata.toArabicDigits(targetCount)} ${targetCount > 1 ? "مرات" : "مرة"}',
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: isDone
-                                          ? AppColors.successGreen
-                                          : AppColors.accentGold,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 11.sp,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12.h),
-
-                            // Zekr Text
-                            SelectableText(
-                              item.text,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                fontSize: 16.sp,
-                                color: isDark
-                                    ? AppColors.textWhite
-                                    : AppColors.textDarkPrimary,
-                                height: 1.85,
-                                fontFamily: AppTextStyles.fontFamilyAmiri,
-                              ),
-                            ),
-                            SizedBox(height: 16.h),
-
-                            // Counter Button and Action Row
-                            Row(
-                              children: [
-                                // Large Tap Counter
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => _decrement(index, targetCount),
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 150),
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 12.h),
-                                      decoration: BoxDecoration(
-                                        color: isDone
-                                            ? AppColors.successGreen
-                                            : (isDark
-                                                ? AppColors.sageGreenContainer
-                                                : const Color(0xFF13362A)),
-                                        borderRadius:
-                                            BorderRadius.circular(14.r),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black
-                                                .withValues(alpha: 0.08),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            isDone
-                                                ? Icons.check_circle_rounded
-                                                : Icons.touch_app_rounded,
-                                            size: 20.r,
-                                            color: isDone
-                                                ? Colors.white
-                                                : (isDark
-                                                    ? AppColors.sageGreen
-                                                    : AppColors.accentGold),
-                                          ),
-                                          SizedBox(width: 8.w),
-                                          Text(
-                                            isDone
-                                                ? 'تم بحمد الله'
-                                                : 'المتبقي: ${QuranMetadata.toArabicDigits(remaining)}',
-                                            style: AppTextStyles.titleSmall
-                                                .copyWith(
-                                              fontSize: 14.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: isDone
-                                                  ? Colors.white
-                                                  : (isDark
-                                                      ? AppColors.sageGreen
-                                                      : Colors.white),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 8.w),
-
-                                // Single item reset
-                                if (remaining < targetCount)
-                                  IconButton(
-                                    tooltip: 'إعادة العداد',
-                                    icon: Icon(
-                                      Icons.refresh_rounded,
-                                      size: 20.r,
-                                      color: AppColors.accentGold,
-                                    ),
-                                    onPressed: () =>
-                                        _resetZekr(index, targetCount),
-                                  ),
-
-                                // Copy
-                                IconButton(
-                                  tooltip: 'نسخ',
-                                  icon: Icon(
-                                    Icons.copy_rounded,
-                                    size: 18.r,
-                                    color: isDark
-                                        ? AppColors.textDimmed
-                                        : AppColors.textDarkMuted,
-                                  ),
-                                  onPressed: () => _copyText(item.text),
-                                ),
-
-                                // Share
-                                IconButton(
-                                  tooltip: 'مشاركة',
-                                  icon: Icon(
-                                    Icons.share_outlined,
-                                    size: 18.r,
-                                    color: isDark
-                                        ? AppColors.textDimmed
-                                        : AppColors.textDarkMuted,
-                                  ),
-                                  onPressed: () => _shareZekr(item),
-                                ),
-                              ],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.03),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
                           ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(18.r),
+                            onTap: () => _decrement(index, targetCount),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Top row: Item Index + Target count badge
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Container(
+                                        width: 28.r,
+                                        height: 28.r,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: isDone
+                                              ? AppColors.successGreen.withValues(alpha: 0.15)
+                                              : (isDark
+                                                  ? AppColors.cardHighlight
+                                                  : AppColors.iconBgCircleLight),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          QuranMetadata.toArabicDigits(index + 1),
+                                          style: TextStyle(
+                                            fontSize: 11.5.sp,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDone
+                                                ? AppColors.successGreen
+                                                : (isDark
+                                                    ? AppColors.sageGreen
+                                                    : AppColors.sageGreenDark),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 10.w, vertical: 3.5.h),
+                                        decoration: BoxDecoration(
+                                          color: isDone
+                                              ? AppColors.successGreen.withValues(alpha: 0.15)
+                                              : (isDark
+                                                  ? AppColors.cardHighlight
+                                                  : const Color(0xFFF3EFE8)),
+                                          borderRadius: BorderRadius.circular(10.r),
+                                        ),
+                                        child: Text(
+                                          isDone
+                                              ? 'مُكتمَل ✓'
+                                              : '${QuranMetadata.toArabicDigits(targetCount)} ${targetCount > 1 ? "مرات" : "مرة"}',
+                                          style: TextStyle(
+                                            color: isDone
+                                                ? AppColors.successGreen
+                                                : (isDark
+                                                    ? AppColors.accentGoldLight
+                                                    : AppColors.accentGold),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11.sp,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Zekr Text: Clear, open, readable Arabic typography
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                                    child: Text(
+                                      item.text,
+                                      textAlign: TextAlign.start,
+                                      textDirection: TextDirection.rtl,
+                                      style: TextStyle(
+                                        fontSize: 16.5.sp,
+                                        height: 1.95,
+                                        letterSpacing: 0.15,
+                                        fontWeight: FontWeight.w400,
+                                        color: isDark
+                                            ? AppColors.textWhite
+                                            : const Color(0xFF1A2621),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Counter Button and Action Row
+                                  Row(
+                                    children: [
+                                      // Calm, tactile Tap Counter
+                                      Expanded(
+                                        child: Material(
+                                          color: Colors.transparent,
+                                          child: InkWell(
+                                            borderRadius: BorderRadius.circular(12.r),
+                                            onTap: () => _decrement(index, targetCount),
+                                            child: AnimatedContainer(
+                                              duration: const Duration(milliseconds: 150),
+                                              padding: EdgeInsets.symmetric(vertical: 9.h, horizontal: 12.w),
+                                              decoration: BoxDecoration(
+                                                color: isDone
+                                                    ? AppColors.successGreen.withValues(alpha: 0.15)
+                                                    : (isDark
+                                                        ? AppColors.cardDarkElevated
+                                                        : const Color(0xFFF4F1EA)),
+                                                borderRadius: BorderRadius.circular(12.r),
+                                                border: Border.all(
+                                                  color: isDone
+                                                      ? AppColors.successGreen.withValues(alpha: 0.35)
+                                                      : (isDark
+                                                          ? Colors.white.withValues(alpha: 0.08)
+                                                          : AppColors.borderLight),
+                                                  width: 0.8,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    isDone
+                                                        ? Icons.check_circle_rounded
+                                                        : Icons.touch_app_outlined,
+                                                    size: 18.r,
+                                                    color: isDone
+                                                        ? AppColors.successGreen
+                                                        : AppColors.accentGold,
+                                                  ),
+                                                  SizedBox(width: 8.w),
+                                                  Text(
+                                                    isDone
+                                                        ? 'تم بحمد الله'
+                                                        : 'المتبقي: ${QuranMetadata.toArabicDigits(remaining)}',
+                                                    style: TextStyle(
+                                                      fontSize: 13.sp,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: isDone
+                                                          ? AppColors.successGreen
+                                                          : (isDark
+                                                              ? AppColors.textWhite
+                                                              : AppColors.textDarkPrimary),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8.w),
+
+                                      // Single item reset
+                                      if (remaining < targetCount)
+                                        IconButton(
+                                          tooltip: 'إعادة العداد',
+                                          icon: Icon(
+                                            Icons.refresh_rounded,
+                                            size: 19.r,
+                                            color: AppColors.accentGold,
+                                          ),
+                                          onPressed: () =>
+                                              _resetZekr(index, targetCount),
+                                        ),
+
+                                      // Copy
+                                      IconButton(
+                                        tooltip: 'نسخ',
+                                        icon: Icon(
+                                          Icons.copy_rounded,
+                                          size: 17.r,
+                                          color: isDark
+                                              ? AppColors.textDimmed
+                                              : AppColors.textDarkMuted,
+                                        ),
+                                        onPressed: () => _copyText(item.text),
+                                      ),
+
+                                      // Share
+                                      IconButton(
+                                        tooltip: 'مشاركة',
+                                        icon: Icon(
+                                          Icons.share_outlined,
+                                          size: 17.r,
+                                          color: isDark
+                                              ? AppColors.textDimmed
+                                              : AppColors.textDarkMuted,
+                                        ),
+                                        onPressed: () => _shareZekr(item),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       );
                     },

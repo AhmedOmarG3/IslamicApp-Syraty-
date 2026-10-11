@@ -286,11 +286,11 @@ class _TafsirBottomSheetState extends State<TafsirBottomSheet> {
                           padding: EdgeInsets.symmetric(vertical: 30.h),
                           child: Column(
                             children: [
-                              Icon(Icons.wifi_off_rounded,
+                              Icon(Icons.menu_book_rounded,
                                   color: AppColors.textMuted, size: 36.r),
                               SizedBox(height: 10.h),
                               Text(
-                                'تعذر جلب التفسير، يرجى التأكد من الاتصال بالإنترنت للمرة الأولى لحفظه أوفلاين.',
+                                'تعذر عرض التفسير، يرجى المحاولة مرة أخرى.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontFamily: 'Amiri',

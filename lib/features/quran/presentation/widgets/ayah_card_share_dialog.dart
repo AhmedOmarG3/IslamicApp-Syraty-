@@ -9,13 +9,17 @@ class AyahCardShareDialog {
     required int ayahNumber,
     required String verseText,
   }) {
+    final cleanSurah = surahName.replaceAll('سورة', '').trim();
+    final arabicAyah = QuranMetadata.toArabicDigits(ayahNumber);
+    final fullSurahName = 'سورة $cleanSurah';
+
     IslamicShareCardDialog.show(
       context,
       type: ShareCardType.ayah,
       contentText: verseText,
-      title: surahName.startsWith('سورة') ? surahName : 'سورة $surahName',
-      subtitle: 'الآية رقم ${QuranMetadata.toArabicDigits(ayahNumber)}',
-      source: 'القرآن الكريم',
+      title: fullSurahName,
+      subtitle: '$fullSurahName · الآية رقم $arabicAyah',
+      source: 'القرآن الكريم · $fullSurahName',
     );
   }
 }

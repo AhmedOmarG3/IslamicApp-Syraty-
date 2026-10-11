@@ -127,6 +127,7 @@ abstract class AppRouter {
             surahName: args?['surahName'] as String? ?? 'الفاتحة',
             versesCount: args?['versesCount'] as int? ?? 7,
             initialAyah: args?['initialAyah'] as int? ?? 1,
+            reciterId: args?['reciterId'] as String?,
           );
         },
       ),

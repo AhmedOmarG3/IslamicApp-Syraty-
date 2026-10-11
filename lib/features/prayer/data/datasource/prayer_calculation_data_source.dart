@@ -41,30 +41,32 @@ class PrayerCalculationDataSourceImpl implements PrayerCalculationDataSource {
     );
 
     // Note: adhan_dart returns UTC DateTime instances. Convert them to local DateTime.
+    final dstOffset = setting.daylightSaving ? const Duration(hours: 1) : Duration.zero;
+
     final times = <PrayerTime>[
       PrayerTime(
         key: PrayerType.fajr,
-        time: pt.fajr.toLocal(),
+        time: pt.fajr.toLocal().add(dstOffset),
       ),
       PrayerTime(
         key: PrayerType.sunrise,
-        time: pt.sunrise.toLocal(),
+        time: pt.sunrise.toLocal().add(dstOffset),
       ),
       PrayerTime(
         key: PrayerType.dhuhr,
-        time: pt.dhuhr.toLocal(),
+        time: pt.dhuhr.toLocal().add(dstOffset),
       ),
       PrayerTime(
         key: PrayerType.asr,
-        time: pt.asr.toLocal(),
+        time: pt.asr.toLocal().add(dstOffset),
       ),
       PrayerTime(
         key: PrayerType.maghrib,
-        time: pt.maghrib.toLocal(),
+        time: pt.maghrib.toLocal().add(dstOffset),
       ),
       PrayerTime(
         key: PrayerType.isha,
-        time: pt.isha.toLocal(),
+        time: pt.isha.toLocal().add(dstOffset),
       ),
     ];
 

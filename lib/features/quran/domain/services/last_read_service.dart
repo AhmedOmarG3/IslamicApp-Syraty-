@@ -76,13 +76,17 @@ class LastReadService {
     lastReadNotifier.value = model;
   }
 
-  /// Helper to load a SurahModel directly by its number
+  static Map<String, dynamic>? _cachedQuranJsonMap;
+
+  /// Helper to load a SurahModel directly by its number with in-memory caching
   static Future<SurahModel?> loadSurah(int surahNumber) async {
     try {
-      final String jsonString =
-          await rootBundle.loadString(AppAssets.quranJson);
-      final Map<String, dynamic> jsonMap = jsonDecode(jsonString);
-      final entry = jsonMap[surahNumber.toString()];
+      if (_cachedQuranJsonMap == null) {
+        final String jsonString =
+            await rootBundle.loadString(AppAssets.quranJson);
+        _cachedQuranJsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      }
+      final entry = _cachedQuranJsonMap![surahNumber.toString()];
       if (entry != null) {
         return SurahModel.fromJson(surahNumber, entry);
       }

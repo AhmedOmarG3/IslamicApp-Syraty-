@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/app/di/service_locator.dart';
 import 'package:siraty/core/constants/colors.dart';
 import 'package:siraty/core/constants/text_styles.dart';
+import 'package:siraty/core/services/haptic_service.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/core/widgets/app_skeleton.dart';
 import 'package:siraty/core/widgets/islamic_share_card_dialog.dart';
@@ -135,12 +136,12 @@ class _HisnAlMuslimPageState extends State<HisnAlMuslimPage> {
     final key = '${categoryId}_$itemId';
     final current = _getRemainingCount(categoryId, itemId, defaultCount);
     if (current > 0) {
-      HapticFeedback.lightImpact();
+      getIt<HapticService>().triggerTap();
       setState(() {
         _remainingCounts[key] = current - 1;
       });
       if (current - 1 == 0) {
-        HapticFeedback.mediumImpact();
+        getIt<HapticService>().triggerCompletion();
       }
     }
   }

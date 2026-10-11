@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:siraty/core/widgets/ornament_divider.dart';
 import 'package:siraty/features/home/presentation/widgets/home_daily_ayah.dart';
 import 'package:siraty/features/home/presentation/widgets/home_daily_cards.dart';
+import 'package:siraty/features/home/presentation/widgets/home_khatma_card.dart';
 import 'package:siraty/features/home/presentation/widgets/home_header_banner.dart';
 import 'package:siraty/features/home/presentation/widgets/home_quick_actions.dart';
 import 'package:siraty/features/home/presentation/widgets/home_sections_grid.dart';
@@ -31,7 +32,11 @@ class HomeBody extends StatelessWidget {
           const HomeDailyCards(),
           SizedBox(height: 16.h),
 
-          // 4. Quick Action Buttons (Qibla, Tasbeeh, Khatma, Names)
+          // 4. Quran Khatma Card (ختمة القرآن الكريم)
+          const HomeKhatmaCard(),
+          SizedBox(height: 16.h),
+
+          // 5. Quick Action Buttons (Qibla, Tasbeeh, Khatma, Names)
           const HomeQuickActions(),
           SizedBox(height: 16.h),
 

@@ -35,8 +35,8 @@ android {
         targetSdk = 36
         multiDexEnabled = true
 
-        versionCode 5   
-        versionName "1.0.4" 
+        versionCode 8   
+        versionName "1.0.6" 
     }
 signingConfigs {
     create("release") {
@@ -55,6 +55,12 @@ signingConfigs {
             } else {
                 signingConfig = signingConfigs.getByName("debug")
             }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }

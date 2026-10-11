@@ -9,6 +9,7 @@ import 'package:siraty/core/constants/text_styles.dart';
 import 'package:siraty/core/services/favorites_service.dart';
 import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/features/quran/data/models/quran_metadata.dart';
+import 'package:siraty/features/quran/domain/services/last_read_service.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -337,16 +338,28 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     constraints: const BoxConstraints(),
                     tooltip: 'مشاركة',
                     onPressed: () {
-                      final textToShare = '${item.content}\n\n${item.title}\nمن تطبيق سيرتي';
+                      final reference = item.subtitle.isNotEmpty
+                          ? '${item.title} · ${item.subtitle}'
+                          : item.title;
+                      final textToShare = '${item.content}\n\n[$reference]\nتمت المشاركة عبر تطبيق سيرتي';
                       Share.share(textToShare);
                     },
                   ),
                   if (item.type == FavoriteType.ayah) ...[
                     SizedBox(width: 14.w),
                     GestureDetector(
-                      onTap: () {
-                        // Navigate to Quran reading
-                        context.go('/quran');
+                      onTap: () async {
+                        final parts = item.id.split('_');
+                        final surahNum = int.tryParse(parts[0]) ?? 1;
+                        final ayahNum = parts.length > 1 ? int.tryParse(parts[1]) : null;
+                        final surah = await LastReadService.loadSurah(surahNum);
+                        if (context.mounted && surah != null) {
+                          context.push('/surah-details', extra: {
+                            'surah': surah,
+                            'surahName': item.title,
+                            'targetAyah': ayahNum,
+                          });
+                        }
                       },
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),

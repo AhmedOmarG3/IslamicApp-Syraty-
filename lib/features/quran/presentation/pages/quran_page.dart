@@ -8,6 +8,8 @@ import 'package:siraty/core/widgets/app_header_bar.dart';
 import 'package:siraty/core/widgets/app_skeleton.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_cubit.dart';
 import 'package:siraty/features/quran/presentation/cubit/quran_state.dart';
+import 'package:siraty/features/quran/data/models/quran_metadata.dart';
+import 'package:siraty/features/quran/domain/services/quran_search_service.dart';
 import 'package:siraty/features/quran/presentation/widgets/quran_body.dart';
 
 class QuranPage extends StatefulWidget {
@@ -164,11 +166,19 @@ class _QuranPageState extends State<QuranPage> {
                   );
                 } else if (state is QuranLoaded) {
                   final surahs = state.surahs;
+                  final normalizedSearch = QuranSearchService.normalizeArabic(searchText);
                   final filteredSurahs = surahs.where((surah) {
-                    final name = surah
-                        .getSurahName()[surah.surahNumber - 1]
-                        .toLowerCase();
-                    return name.contains(searchText);
+                    if (searchText.isEmpty) return true;
+                    final rawName = surah
+                        .getSurahName()[surah.surahNumber - 1];
+                    final normalizedName = QuranSearchService.normalizeArabic(rawName);
+                    final numStr = surah.surahNumber.toString();
+                    final arabicNum = QuranMetadata.toArabicDigits(surah.surahNumber);
+
+                    return normalizedName.contains(normalizedSearch) ||
+                        rawName.toLowerCase().contains(searchText) ||
+                        numStr.contains(searchText) ||
+                        arabicNum.contains(searchText);
                   }).toList();
 
                   return QuranBody(filteredSurahs: filteredSurahs);

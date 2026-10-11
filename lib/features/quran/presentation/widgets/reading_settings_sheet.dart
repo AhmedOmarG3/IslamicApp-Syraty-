@@ -125,120 +125,114 @@ class ReadingSettingsSheet extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
 
-              // 2. Font Size Slider & Controls
+              // 2. Tajweed & Waqf Quick Guide Button
+              InkWell(
+                onTap: () {
+                  Navigator.pop(context);
+                  TajweedQuickSheet.show(context);
+                },
+                borderRadius: BorderRadius.circular(14.r),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardDarkElevated,
+                    borderRadius: BorderRadius.circular(14.r),
+                    border: Border.all(
+                      color: AppColors.accentGold.withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentGold.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.menu_book_rounded,
+                          color: AppColors.accentGold,
+                          size: 18.r,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'أحكام التجويد وعلامات الوقف',
+                              style: TextStyle(
+                                fontFamily: 'Amiri',
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textWhite,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'دليل سريع لعلامات المصحف (مـ، لا، ج، صلى، قلى...) وأحكام التلاوة',
+                              style: TextStyle(
+                                fontFamily: 'Amiri',
+                                fontSize: 11.5.sp,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14.r,
+                        color: AppColors.accentGold,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              // 3. Mushaf Paper Theme Selection
+              Text(
+                'لون ورق المصحف',
+                style: TextStyle(
+                  fontFamily: 'Amiri',
+                  fontSize: 14.sp,
+                  color: AppColors.textWhite,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 10.h),
               BlocBuilder<MushafSettingsCubit, MushafSettingsState>(
                 builder: (context, settings) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  return Row(
                     children: [
-                      // Tajweed & Waqf Quick Guide Button
-                      InkWell(
-                        onTap: () {
-                          Navigator.pop(context);
-                          TajweedQuickSheet.show(context);
-                        },
-                        borderRadius: BorderRadius.circular(14.r),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                          decoration: BoxDecoration(
-                            color: AppColors.cardDarkElevated,
-                            borderRadius: BorderRadius.circular(14.r),
-                            border: Border.all(
-                              color: AppColors.accentGold.withValues(alpha: 0.35),
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(8.r),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accentGold.withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.menu_book_rounded,
-                                  color: AppColors.accentGold,
-                                  size: 18.r,
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'أحكام التجويد وعلامات الوقف',
-                                      style: TextStyle(
-                                        fontFamily: 'Amiri',
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textWhite,
-                                      ),
-                                    ),
-                                    SizedBox(height: 2.h),
-                                    Text(
-                                      'دليل سريع لعلامات المصحف (مـ، لا، ج، صلى، قلى...) وأحكام التلاوة',
-                                      style: TextStyle(
-                                        fontFamily: 'Amiri',
-                                        fontSize: 11.5.sp,
-                                        color: AppColors.textMuted,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios_rounded,
-                                size: 14.r,
-                                color: AppColors.accentGold,
-                              ),
-                            ],
-                          ),
-                        ),
+                      _buildThemeCard(
+                        context: context,
+                        title: 'ورق المدينة',
+                        mode: MushafThemeMode.cream,
+                        bgColor: const Color(0xFFFBF6EC),
+                        textColor: const Color(0xFF141C18),
+                        borderColor: const Color(0xFFBD9346),
                       ),
-                      SizedBox(height: 16.h),
-
-                      // 3. Mushaf Paper Theme Selection
-                      Text(
-                        'لون ورق المصحف',
-                        style: TextStyle(
-                          fontFamily: 'Amiri',
-                          fontSize: 14.sp,
-                          color: AppColors.textWhite,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      SizedBox(width: 8.w),
+                      _buildThemeCard(
+                        context: context,
+                        title: 'الوضع الليلي',
+                        mode: MushafThemeMode.night,
+                        bgColor: const Color(0xFF131817),
+                        textColor: const Color(0xFFF7F8F4),
+                        borderColor: const Color(0xFFC7A567),
                       ),
-                      SizedBox(height: 10.h),
-                      Row(
-                        children: [
-                          _buildThemeCard(
-                            context: context,
-                            title: 'ورق المدينة',
-                            mode: MushafThemeMode.cream,
-                            bgColor: const Color(0xFFFBF6EC),
-                            textColor: const Color(0xFF141C18),
-                            borderColor: const Color(0xFFBD9346),
-                          ),
-                          SizedBox(width: 8.w),
-                          _buildThemeCard(
-                            context: context,
-                            title: 'الوضع الليلي',
-                            mode: MushafThemeMode.night,
-                            bgColor: const Color(0xFF131817),
-                            textColor: const Color(0xFFF7F8F4),
-                            borderColor: const Color(0xFFC7A567),
-                          ),
-                          SizedBox(width: 8.w),
-                          _buildThemeCard(
-                            context: context,
-                            title: 'الوضع الدافئ',
-                            mode: MushafThemeMode.sepia,
-                            bgColor: const Color(0xFFF4EBD9),
-                            textColor: const Color(0xFF281D10),
-                            borderColor: const Color(0xFFA67C33),
-                          ),
-                        ],
+                      SizedBox(width: 8.w),
+                      _buildThemeCard(
+                        context: context,
+                        title: 'الوضع الدافئ',
+                        mode: MushafThemeMode.sepia,
+                        bgColor: const Color(0xFFF4EBD9),
+                        textColor: const Color(0xFF281D10),
+                        borderColor: const Color(0xFFA67C33),
                       ),
                     ],
                   );
@@ -253,28 +247,42 @@ class ReadingSettingsSheet extends StatelessWidget {
                   onToggleFullScreen();
                 },
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 16.w),
                   decoration: BoxDecoration(
                     color: AppColors.cardDarkElevated,
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.fullscreen_rounded,
                         color: AppColors.accentGold,
-                        size: 22.r,
+                        size: 24.r,
                       ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'تفعيل وضع الصفحة الكاملة (ملء الشاشة)',
-                        style: TextStyle(
-                          fontFamily: 'Amiri',
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textWhite,
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'تفعيل وضع الصفحة الكاملة (ملء الشاشة)',
+                              style: TextStyle(
+                                fontFamily: 'Amiri',
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textWhite,
+                              ),
+                            ),
+                            SizedBox(height: 2.h),
+                            Text(
+                              'تنسيق متناسق ومركز بدون تمدد مع مساحة مريحة للقراءة',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

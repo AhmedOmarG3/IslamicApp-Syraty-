@@ -18,8 +18,10 @@ class OrnamentDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final effectiveStarColor = starColor ?? AppColors.accentGold;
-    final effectiveLineColor = lineColor ?? AppColors.borderSubtle;
+    final effectiveLineColor =
+        lineColor ?? (isDark ? AppColors.borderSubtle : AppColors.borderLight);
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: verticalPadding),
